@@ -34,7 +34,11 @@ namespace NineChronicles.DataProvider.Executable
             Log.Logger = loggerConf.CreateLogger();
 
             var tasks = new List<Task>();
-            var standaloneContext = new NineChronicles.DataProvider.StandaloneContext
+            var GQstandaloneContext = new NineChronicles.Headless.StandaloneContext
+            {
+                KeyStore = Web3KeyStore.DefaultKeyStore,
+            };
+            var HstandaloneContext = new NineChronicles.DataProvider.StandaloneContext
             {
                 KeyStore = Web3KeyStore.DefaultKeyStore,
             };
@@ -65,7 +69,7 @@ namespace NineChronicles.DataProvider.Executable
 
                 var graphQLService = new GraphQLService(graphQLNodeServiceProperties);
                 graphQLHostBuilder =
-                    graphQLService.Configure(graphQLHostBuilder, standaloneContext);
+                    graphQLService.Configure(graphQLHostBuilder, GQstandaloneContext);
 
                 tasks.Add(graphQLHostBuilder.RunConsoleAsync(token));
                 await WaitForGraphQLService(graphQLNodeServiceProperties, source.Token);
@@ -110,7 +114,7 @@ namespace NineChronicles.DataProvider.Executable
             DataProviderNodeService nineChroniclesNodeService =
                StandaloneServices.CreateHeadless(
                    nineChroniclesProperties,
-                   standaloneContext,
+                   HstandaloneContext,
                    blockInterval: config.BlockInterval,
                    reorgInterval: config.ReorgInterval,
                    authorizedMiner: config.AuthorizedMiner,
