@@ -34,7 +34,7 @@ namespace NineChronicles.DataProvider.Executable
             Log.Logger = loggerConf.CreateLogger();
 
             var tasks = new List<Task>();
-            var standaloneContext = new StandaloneContext
+            var standaloneContext = new NineChronicles.DataProvider.StandaloneContext
             {
                 KeyStore = Web3KeyStore.DefaultKeyStore,
             };
@@ -107,7 +107,7 @@ namespace NineChronicles.DataProvider.Executable
                 properties.LogActionRenders = true;
             }
 
-            NineChroniclesNodeService nineChroniclesNodeService =
+            DataProviderNodeService nineChroniclesNodeService =
                StandaloneServices.CreateHeadless(
                    nineChroniclesProperties,
                    standaloneContext,
