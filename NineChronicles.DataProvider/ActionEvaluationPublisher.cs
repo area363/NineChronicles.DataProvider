@@ -1,8 +1,5 @@
 using System;
-using System.IO;
-using System.IO.Compression;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
 using Lib9c.Renderer;
@@ -40,10 +37,6 @@ namespace NineChronicles.DataProvider
                 .Subscribe(
                  ev =>
                 {
-                    var formatter = new BinaryFormatter();
-                    using var c = new MemoryStream();
-                    using var df = new DeflateStream(c, System.IO.Compression.CompressionLevel.Fastest);
-
                     try
                     {
                         Log.Debug("***********ACTION: {0}", ev.Action.PlainValue.ToString());
