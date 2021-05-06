@@ -1,16 +1,18 @@
-using System;
-using System.Runtime.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
-using Lib9c.Renderer;
-using Microsoft.Extensions.Hosting;
-using Nekoyume.Action;
-using NineChronicles.Headless;
-using Serilog;
-using NineChroniclesActionType = Libplanet.Action.PolymorphicAction<Nekoyume.Action.ActionBase>;
-
 namespace NineChronicles.DataProvider
 {
+    using System;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Runtime.Serialization;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Lib9c.Renderer;
+    using Microsoft.Extensions.Hosting;
+    using Nekoyume.Action;
+    using NineChronicles.Headless;
+    using Serilog;
+    using NineChroniclesActionType = Libplanet.Action.PolymorphicAction<Nekoyume.Action.ActionBase>;
+
+    [SuppressMessage("ReSharper", "SA1309", Justification = "Use underscore for private field")]
     public class ActionEvaluationPublisher : BackgroundService
     {
         private readonly BlockRenderer _blockRenderer;
@@ -22,18 +24,17 @@ namespace NineChronicles.DataProvider
             BlockRenderer blockRenderer,
             ActionRenderer actionRenderer,
             ExceptionRenderer exceptionRenderer,
-            NodeStatusRenderer nodeStatusRenderer
-        )
+            NodeStatusRenderer nodeStatusRenderer)
         {
-            _blockRenderer = blockRenderer;
-            _actionRenderer = actionRenderer;
-            _exceptionRenderer = exceptionRenderer;
-            _nodeStatusRenderer = nodeStatusRenderer;
+            this._blockRenderer = blockRenderer;
+            this._actionRenderer = actionRenderer;
+            this._exceptionRenderer = exceptionRenderer;
+            this._nodeStatusRenderer = nodeStatusRenderer;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _actionRenderer.EveryRender<ActionBase>()
+            this._actionRenderer.EveryRender<ActionBase>()
                 .Subscribe(
                  ev =>
                 {
@@ -43,17 +44,16 @@ namespace NineChronicles.DataProvider
                     }
                     catch (SerializationException se)
                     {
-                        // FIXME add logger as property
+                        // add logger as property
                         Log.Error(se, "Skip broadcasting render since the given action isn't serializable.");
                     }
                     catch (Exception e)
                     {
-                        // FIXME add logger as property
+                        // add logger as property
                         Log.Error(e, "Skip broadcasting render due to the unexpected exception");
                     }
                 },
-                stoppingToken
-            );
+                 stoppingToken);
             return Task.CompletedTask;
         }
     }
