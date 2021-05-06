@@ -81,7 +81,6 @@
                 properties.LogActionRenders = true;
             }
 
-            RpcContext rpcContext = new RpcContext();
             NineChroniclesNodeService nineChroniclesNodeService =
                 StandaloneServices.CreateHeadless(
                     nineChroniclesProperties,
