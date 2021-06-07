@@ -4,9 +4,10 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using Bencodex.Types;
+    using System.Threading.Tasks;
     using Cocona;
     using Libplanet;
+    using Libplanet.Action;
     using Libplanet.Blockchain;
     using Libplanet.Blockchain.Policies;
     using Libplanet.Blocks;
@@ -15,20 +16,18 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
     using MySqlConnector;
     using Nekoyume.Action;
     using Nekoyume.BlockChain;
-    using Nekoyume.Model.State;
     using Serilog;
     using Serilog.Events;
     using NCAction = Libplanet.Action.PolymorphicAction<Nekoyume.Action.ActionBase>;
 
     public class MySqlMigration
     {
-        private const string AgentDbName = "agent";
-        private const string AvatarDbName = "avatar";
-        private const string HasDbName = "hack_and_slash";
+        private const string AgentDbName = "Agents";
+        private const string AvatarDbName = "Avatars";
+        private const string HasDbName = "HackAndSlashes";
         private string _connectionString;
         private IStore _baseStore;
         private BlockChain<NCAction> _baseChain;
-        private BlockChain<NCAction> _newChain;
         private StreamWriter _agentBulkFile;
         private StreamWriter _avatarBulkFile;
         private StreamWriter _hasBulkFile;
@@ -65,7 +64,15 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
             [Option(
                 "mysql-database",
                 Description = "The name of MySQL database to use.")]
-            string mysqlDatabase
+            string mysqlDatabase,
+            [Option(
+                "offset",
+                Description = "offset of block index (no entry will migrate from the genesis block).")]
+            int? offset = null,
+            [Option(
+                "limit",
+                Description = "limit of block count (no entry will migrate to the chain tip).")]
+            int? limit = null
         )
         {
             DateTimeOffset start = DateTimeOffset.UtcNow;
@@ -124,14 +131,6 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
             TrieStateStore baseStateStore =
                 new TrieStateStore(baseStateKeyValueStore, baseStateRootKeyValueStore);
 
-            // Setup new store
-            var newPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            RocksDBStore newStore = new RocksDBStore(newPath);
-            RocksDBKeyValueStore newStateRootKeyValueStore = new RocksDBKeyValueStore(Path.Combine(newPath, "state_hashes"));
-            RocksDBKeyValueStore newStateKeyValueStore = new RocksDBKeyValueStore(Path.Combine(newPath, "states"));
-            TrieStateStore newStateStore =
-                new TrieStateStore(newStateKeyValueStore, newStateRootKeyValueStore);
-
             // Setup block policy
             const int minimumDifficulty = 5000000, maximumTransactions = 100;
             IStagePolicy<NCAction> stagePolicy = new VolatileStagePolicy<NCAction>();
@@ -142,122 +141,80 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
             // Setup base chain & new chain
             Block<NCAction> genesis = _baseStore.GetBlock<NCAction>(gHash);
             _baseChain = new BlockChain<NCAction>(blockPolicy, stagePolicy, _baseStore, baseStateStore, genesis);
-            if (blockPolicy is BlockPolicy bp && _baseChain.GetState(AuthorizedMinersState.Address) is Dictionary ams)
-            {
-                bp.AuthorizedMinersState = new AuthorizedMinersState(ams);
-            }
-
-            _newChain = new BlockChain<NCAction>(blockPolicy, stagePolicy, newStore, newStateStore, genesis);
 
             // Prepare block hashes to append to new chain
             long height = _baseChain.Tip.Index;
-            int limit = (int)height;
-            BlockHash[] blockHashes = limit < 0
-                ? _baseChain.BlockHashes.SkipWhile((_, i) => i < height + limit).ToArray()
-                : _baseChain.BlockHashes.Take(limit).ToArray();
-            Block<NCAction>[] blocks = blockHashes.Select(h => _baseChain[h]).ToArray();
-            Console.WriteLine(
-                "Finished setting up RocksDBStore. Migrating {0} blocks: {1}-{2} (inclusive).",
-                blockHashes.Length,
-                blockHashes[0],
-                blockHashes.Last()
-            );
+            if (offset + limit > (int)height)
+            {
+                Console.Error.WriteLine(
+                    "The sum of the offset and limit is greater than the chain tip index: {0}",
+                    height);
+                Environment.Exit(1);
+                return;
+            }
 
             Console.WriteLine("Start migration.");
 
+            // files to store bulk file paths (new file created every 10000 blocks for bulk load performance)
             _agentFiles = new List<string>();
             _avatarFiles = new List<string>();
             _hasFiles = new List<string>();
 
+            // lists to keep track of inserted addresses to minimize duplicates
             _agentList = new List<string>();
             _avatarList = new List<string>();
 
             CreateBulkFiles();
-
             try
             {
-                foreach (Block<NCAction> block in blocks)
+                int totalCount = limit ?? (int)_baseStore.CountBlocks();
+                int remainingCount = totalCount;
+                int offsetIdx = 0;
+
+                while (remainingCount > 0)
                 {
-                    if (block.Index == 0)
+                    int interval = 1000;
+                    int limitInterval;
+                    Task<List<ActionEvaluation>>[] taskArray;
+                    if (interval < remainingCount)
                     {
-                        continue;
+                        taskArray = new Task<List<ActionEvaluation>>[interval];
+                        limitInterval = interval;
+                    }
+                    else
+                    {
+                        taskArray = new Task<List<ActionEvaluation>>[remainingCount];
+                        limitInterval = remainingCount;
                     }
 
-                    Console.WriteLine("Migrating block #{0}", block.Index);
-                    _newChain.Append(block);
-                    if (block.Transactions.Count > 0)
+                    foreach (var item in
+                        _baseStore.IterateIndexes(_baseChain.Id, offset + offsetIdx ?? 0 + offsetIdx, limitInterval).Select((value, i) => new { i, value }))
                     {
-                        foreach (var tx in block.Transactions)
+                        var block = _baseStore.GetBlock<NCAction>(item.value);
+                        taskArray[item.i] = Task.Factory.StartNew(() =>
                         {
-                            if (tx.Actions[0].InnerAction is HackAndSlash2 hasAction2)
-                            {
-                                Address signer = tx.Signer;
-                                var evList = block.Evaluate(
-                                    DateTimeOffset.Now,
-                                    address => _newChain.GetState(address, block.Hash),
-                                    (address, currency) =>
-                                        _newChain.GetBalance(address, currency, block.Hash)).ToList();
-                                string avatarName = evList.First().OutputStates
-                                    .GetAvatarState(hasAction2.avatarAddress).name;
-                                WriteHackAndSlash(
-                                    block.Index,
-                                    signer,
-                                    hasAction2.avatarAddress,
-                                    avatarName ?? "N/A",
-                                    hasAction2.stageId,
-                                    hasAction2.Result is { IsClear: true });
-                            }
-
-                            if (tx.Actions[0].InnerAction is HackAndSlash3 hasAction3)
-                            {
-                                Address signer = tx.Signer;
-                                var evList = block.Evaluate(
-                                    DateTimeOffset.Now,
-                                    address => _newChain.GetState(address, block.Hash),
-                                    (address, currency) =>
-                                        _newChain.GetBalance(address, currency, block.Hash)).ToList();
-                                string avatarName = evList.First().OutputStates
-                                    .GetAvatarState(hasAction3.avatarAddress).name;
-                                WriteHackAndSlash(
-                                    block.Index,
-                                    signer,
-                                    hasAction3.avatarAddress,
-                                    avatarName ?? "N/A",
-                                    hasAction3.stageId,
-                                    hasAction3.Result is { IsClear: true });
-                            }
-
-                            if (tx.Actions[0].InnerAction is HackAndSlash4 hasAction4)
-                            {
-                                Address signer = tx.Signer;
-                                var evList = block.Evaluate(
-                                    DateTimeOffset.Now,
-                                    address => _newChain.GetState(address, block.Hash),
-                                    (address, currency) =>
-                                        _newChain.GetBalance(address, currency, block.Hash)).ToList();
-                                string avatarName = evList.First().OutputStates
-                                    .GetAvatarState(hasAction4.avatarAddress).name;
-                                WriteHackAndSlash(
-                                    block.Index,
-                                    signer,
-                                    hasAction4.avatarAddress,
-                                    avatarName ?? "N/A",
-                                    hasAction4.stageId,
-                                    hasAction4.Result is { IsClear: true });
-                            }
-                        }
+                            List<ActionEvaluation> actionEvaluations = EvaluateBlock(block);
+                            Console.WriteLine($"Block progress: {block.Index}/{remainingCount}");
+                            return actionEvaluations;
+                        });
                     }
 
-                    if ((block.Index > 0 && block.Index % 10000 == 0) || block.Index == limit - 1)
+                    if (interval < remainingCount)
                     {
-                        FlushBulkFiles();
-                        CreateBulkFiles();
-                        Console.WriteLine("Finished block data preparation at block {0}.", block.Index);
+                        remainingCount -= interval;
+                        offsetIdx += interval;
                     }
+                    else
+                    {
+                        remainingCount = 0;
+                        offsetIdx += remainingCount;
+                    }
+
+                    Task.WaitAll(taskArray);
+                    ProcessTasks(taskArray);
                 }
 
                 FlushBulkFiles();
-
                 DateTimeOffset postDataPrep = DateTimeOffset.Now;
                 Console.WriteLine("Data Preparation Complete! Time Elapsed: {0}", postDataPrep - start);
 
@@ -278,11 +235,73 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
             }
             catch (Exception e)
             {
-                Console.WriteLine("Error: {0}", e.Message);
+                Console.WriteLine(e.Message);
             }
 
             DateTimeOffset end = DateTimeOffset.UtcNow;
             Console.WriteLine("Migration Complete! Time Elapsed: {0}", end - start);
+        }
+
+        private void ProcessTasks(Task<List<ActionEvaluation>>[] taskArray)
+        {
+            foreach (var task in taskArray)
+            {
+                if (task.Result is { } data)
+                {
+                    foreach (var ae in data)
+                    {
+                        if (ae.Action is PolymorphicAction<ActionBase> action)
+                        {
+                            // avatarNames will be stored as "N/A" for optimzation
+                            if (action.InnerAction is HackAndSlash2 hasAction2)
+                            {
+                                WriteHackAndSlash(
+                                    hasAction2.Id,
+                                    ae.InputContext.BlockIndex,
+                                    ae.InputContext.Signer,
+                                    hasAction2.avatarAddress,
+                                    "N/A",
+                                    hasAction2.stageId,
+                                    hasAction2.Result is { IsClear: true });
+                            }
+
+                            if (action.InnerAction is HackAndSlash3 hasAction3)
+                            {
+                                WriteHackAndSlash(
+                                    hasAction3.Id,
+                                    ae.InputContext.BlockIndex,
+                                    ae.InputContext.Signer,
+                                    hasAction3.avatarAddress,
+                                    "N/A",
+                                    hasAction3.stageId,
+                                    hasAction3.Result is { IsClear: true });
+                            }
+
+                            if (action.InnerAction is HackAndSlash4 hasAction4)
+                            {
+                                WriteHackAndSlash(
+                                    hasAction4.Id,
+                                    ae.InputContext.BlockIndex,
+                                    ae.InputContext.Signer,
+                                    hasAction4.avatarAddress,
+                                    "N/A",
+                                    hasAction4.stageId,
+                                    hasAction4.Result is { IsClear: true });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private List<ActionEvaluation> EvaluateBlock(Block<NCAction> block)
+        {
+            var evList = block.Evaluate(
+                DateTimeOffset.Now,
+                address => _baseChain.GetState(address, block.Hash),
+                (address, currency) =>
+                    _baseChain.GetBalance(address, currency, block.Hash)).ToList();
+            return evList;
         }
 
         private void FlushBulkFiles()
@@ -345,6 +364,7 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
         }
 
         private void WriteHackAndSlash(
+            Guid actionId,
             long blockIndex,
             Address agentAddress,
             Address avatarAddress,
@@ -352,6 +372,7 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
             int stageId,
             bool isClear)
         {
+            // check if address is already in _agentList
             if (!_agentList.Contains(agentAddress.ToString()))
             {
                 _agentBulkFile.WriteLine(
@@ -359,6 +380,7 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                 _agentList.Add(agentAddress.ToString());
             }
 
+            // check if address is already in _avatarList
             if (!_avatarList.Contains(avatarAddress.ToString()))
             {
                 _avatarBulkFile.WriteLine(
@@ -369,12 +391,14 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
             }
 
             _hasBulkFile.WriteLine(
+                $"{actionId.ToString()};" +
                 $"{avatarAddress.ToString()};" +
                 $"{agentAddress.ToString()};" +
                 $"{stageId};" +
-                $"{isClear};" +
-                $"{stageId > 10000000}");
-            Console.WriteLine("Write HackAndSlash action in block #{0}", blockIndex);
+                $"{(isClear ? 1 : 0)};" +
+                $"{(stageId > 10000000 ? 1 : 0)};" +
+                $"{blockIndex.ToString()}");
+            Console.WriteLine("Writing HackAndSlash action in block #{0}", blockIndex);
         }
     }
 }
