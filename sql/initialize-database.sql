@@ -249,8 +249,7 @@ CREATE TABLE IF NOT EXISTS `data_provider`.`Grindings` (
     `EquipmentLevel` int NOT NULL,
     `Crystal` decimal(13,2) NOT NULL,
     `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX (`Id`, `BlockIndex`),
-    PRIMARY KEY (`Timestamp`),
+    INDEX (`Id`, `BlockIndex`, `Timestamp`),
     KEY `fk_Grindings_Agent1_idx` (`AgentAddress`),
     KEY `fk_Grindings_AvatarAddress1_idx` (`AvatarAddress`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
