@@ -41,5 +41,7 @@ namespace NineChronicles.DataProvider.Store
         public DbSet<ShopHistoryMaterialModel>? ShopHistoryMaterials { get; set; }
 
         public DbSet<ShopHistoryConsumableModel>? ShopHistoryConsumables { get; set; }
+
+        public DbSet<GrindingModel>? Grindings { get; set; }
     }
 }
