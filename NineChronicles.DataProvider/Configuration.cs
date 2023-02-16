@@ -2,6 +2,8 @@
 
 namespace NineChronicles.DataProvider
 {
+    using NineChronicles.Headless.Properties;
+
     public class Configuration
     {
         public string? AppProtocolVersionToken { get; set; }
@@ -15,8 +17,6 @@ namespace NineChronicles.DataProvider
         public ushort? Port { get; set; }
 
         public string? SwarmPrivateKeyString { get; set; }
-
-        public int MinimumDifficulty { get; set; }
 
         public string? MinerPrivateKeyString { get; set; }
 
@@ -47,11 +47,7 @@ namespace NineChronicles.DataProvider
 
         public bool NoCors { get; set; }
 
-        public int Workers { get; set; }
-
         public int Confirmations { get; set; }
-
-        public int MaximumTransactions { get; set; }
 
         public bool StrictRendering { get; set; }
 
@@ -63,6 +59,8 @@ namespace NineChronicles.DataProvider
 
         public bool LogActionRenders { get; set; }
 
+        public bool Render { get; set; }
+
         public string? AwsCognitoIdentity { get; set; }
 
         public string? AwsAccessKey { get; set; }
@@ -73,6 +71,8 @@ namespace NineChronicles.DataProvider
 
         public bool AuthorizedMiner { get; set; }
 
+        public bool Preload { get; set; }
+
         public int TxLifeTime { get; set; }
 
         public int MessageTimeout { get; set; }
@@ -81,10 +81,18 @@ namespace NineChronicles.DataProvider
 
         public int DemandBuffer { get; set; }
 
+        public int MinimumBroadcastTarget { get; set; }
+
+        public int BucketSize { get; set; }
+
         public string[]? StaticPeerStrings { get; set; }
+
+        public bool NoReduceStore { get; set; }
 
 #pragma warning restore SA1011 // Closing square brackets should be spaced correctly
 #nullable disable
         public string MySqlConnectionString { get; set; }
+
+        public NetworkType NetworkType { get; set; } = NetworkType.Main;
     }
 }
