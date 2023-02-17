@@ -30,6 +30,7 @@ namespace NineChronicles.DataProvider
     using Nekoyume.TableData;
     using Nekoyume.TableData.Crystal;
     using Nekoyume.TableData.Event;
+    using NineChronicles.DataProvider.DataRendering;
     using NineChronicles.DataProvider.Store;
     using NineChronicles.DataProvider.Store.Models;
     using NineChronicles.Headless;
@@ -511,6 +512,7 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } has)
                         {
                             var start = DateTimeOffset.UtcNow;
+                            var avatarModel = Avatar.GetAvatarInfo((Nekoyume.Action.ActionBase.ActionEvaluation<GameAction>)ev, has.AvatarAddress, has.RuneInfos, _blockTimeOffset);
                             AvatarState avatarState = ev.OutputStates.GetAvatarStateV2(has.AvatarAddress);
                             bool isClear = avatarState.stageMap.ContainsKey(has.StageId);
                             var itemSlotStateAddress = ItemSlotState.DeriveAddress(has.AvatarAddress, BattleType.Adventure);
@@ -605,17 +607,7 @@ namespace NineChronicles.DataProvider
                                 avatarTitleId,
                                 avatarCp);
 
-                            _avatarList.Add(new AvatarModel()
-                            {
-                                Address = has.AvatarAddress.ToString(),
-                                AgentAddress = ev.Signer.ToString(),
-                                Name = avatarName,
-                                AvatarLevel = avatarLevel,
-                                TitleId = avatarTitleId,
-                                ArmorId = avatarArmorId,
-                                Cp = avatarCp,
-                                Timestamp = _blockTimeOffset,
-                            });
+                            _avatarList.Add(avatarModel);
                             _hasList.Add(new HackAndSlashModel()
                             {
                                 Id = has.Id.ToString(),

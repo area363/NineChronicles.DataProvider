@@ -15,16 +15,18 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
     using Libplanet.Store;
     using MySqlConnector;
     using Nekoyume.Action;
+    using Nekoyume.BlockChain.Policy;
     using Nekoyume.BlockChain;
+    using Nekoyume.Model.State;
     using Serilog;
     using Serilog.Events;
     using NCAction = Libplanet.Action.PolymorphicAction<Nekoyume.Action.ActionBase>;
 
     public class MySqlMigration
     {
-        private const string AgentDbName = "Agents";
-        private const string AvatarDbName = "Avatars";
-        private const string HasDbName = "HackAndSlashes";
+        private const string AgentTable = "Agents";
+        private const string AvatarTable = "Avatars";
+        private const string HasTable = "HackAndSlashes";
         private string _connectionString;
         private IStore _baseStore;
         private BlockChain<NCAction> _baseChain;
@@ -95,10 +97,6 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                     storePath,
                     dbConnectionCacheSize: 10000);
             }
-            else if (rocksdbStoreType == "mono")
-            {
-                _baseStore = new MonoRocksDBStore(storePath);
-            }
             else
             {
                 throw new CommandExitedException("Invalid rocksdb-storetype. Please enter 'new' or 'mono'", -1);
@@ -126,17 +124,15 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
             }
 
             // Setup base store
-            RocksDBKeyValueStore baseStateRootKeyValueStore = new RocksDBKeyValueStore(Path.Combine(storePath, "state_hashes"));
             RocksDBKeyValueStore baseStateKeyValueStore = new RocksDBKeyValueStore(Path.Combine(storePath, "states"));
             TrieStateStore baseStateStore =
-                new TrieStateStore(baseStateKeyValueStore, baseStateRootKeyValueStore);
+                new TrieStateStore(baseStateKeyValueStore);
 
             // Setup block policy
-            const int minimumDifficulty = 5000000, maximumTransactions = 100;
             IStagePolicy<NCAction> stagePolicy = new VolatileStagePolicy<NCAction>();
             LogEventLevel logLevel = LogEventLevel.Debug;
             var blockPolicySource = new BlockPolicySource(Log.Logger, logLevel);
-            IBlockPolicy<NCAction> blockPolicy = blockPolicySource.GetPolicy(minimumDifficulty, maximumTransactions);
+            IBlockPolicy<NCAction> blockPolicy = blockPolicySource.GetPolicy();
 
             // Setup base chain & new chain
             Block<NCAction> genesis = _baseStore.GetBlock<NCAction>(gHash);
@@ -220,17 +216,17 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
 
                 foreach (var path in _agentFiles)
                 {
-                    BulkInsert(AgentDbName, path);
+                    BulkInsert(AgentTable, path);
                 }
 
                 foreach (var path in _avatarFiles)
                 {
-                    BulkInsert(AvatarDbName, path);
+                    BulkInsert(AvatarTable, path);
                 }
 
                 foreach (var path in _hasFiles)
                 {
-                    BulkInsert(HasDbName, path);
+                    BulkInsert(HasTable, path);
                 }
             }
             catch (Exception e)
@@ -253,76 +249,88 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                         if (ae.Action is PolymorphicAction<ActionBase> action)
                         {
                             // avatarNames will be stored as "N/A" for optimzation
-                            if (action.InnerAction is HackAndSlash hasAction)
+                            if (action.InnerAction is HackAndSlash hasAction )
                             {
+                                AvatarState avatarState = ae.OutputStates.GetAvatarStateV2(hasAction.AvatarAddress);
+                                bool isClear = avatarState.stageMap.ContainsKey(hasAction.StageId);
                                 WriteHackAndSlash(
                                     hasAction.Id,
                                     ae.InputContext.BlockIndex,
                                     ae.InputContext.Signer,
-                                    hasAction.avatarAddress,
-                                    "N/A",
-                                    hasAction.stageId,
-                                    hasAction.Result is { IsClear: true });
+                                    hasAction.AvatarAddress,
+                                    avatarState.name,
+                                    hasAction.StageId,
+                                    isClear);
                             }
 
                             if (action.InnerAction is HackAndSlash0 hasAction0)
                             {
+                                AvatarState avatarState = ae.OutputStates.GetAvatarStateV2(hasAction0.avatarAddress);
+                                bool isClear = avatarState.stageMap.ContainsKey(hasAction0.stageId);
                                 WriteHackAndSlash(
                                     hasAction0.Id,
                                     ae.InputContext.BlockIndex,
                                     ae.InputContext.Signer,
                                     hasAction0.avatarAddress,
-                                    "N/A",
+                                    avatarState.name,
                                     hasAction0.stageId,
-                                    hasAction0.Result is { IsClear: true });
+                                    isClear);
                             }
 
                             if (action.InnerAction is HackAndSlash2 hasAction2)
                             {
+                                AvatarState avatarState = ae.OutputStates.GetAvatarStateV2(hasAction2.avatarAddress);
+                                bool isClear = avatarState.stageMap.ContainsKey(hasAction2.stageId);
                                 WriteHackAndSlash(
                                     hasAction2.Id,
                                     ae.InputContext.BlockIndex,
                                     ae.InputContext.Signer,
                                     hasAction2.avatarAddress,
-                                    "N/A",
+                                    avatarState.name,
                                     hasAction2.stageId,
-                                    hasAction2.Result is { IsClear: true });
+                                    isClear);
                             }
 
                             if (action.InnerAction is HackAndSlash3 hasAction3)
                             {
+                                AvatarState avatarState = ae.OutputStates.GetAvatarStateV2(hasAction3.avatarAddress);
+                                bool isClear = avatarState.stageMap.ContainsKey(hasAction3.stageId);
                                 WriteHackAndSlash(
                                     hasAction3.Id,
                                     ae.InputContext.BlockIndex,
                                     ae.InputContext.Signer,
                                     hasAction3.avatarAddress,
-                                    "N/A",
+                                    avatarState.name,
                                     hasAction3.stageId,
-                                    hasAction3.Result is { IsClear: true });
+                                    isClear);
                             }
 
                             if (action.InnerAction is HackAndSlash4 hasAction4)
                             {
+                                AvatarState avatarState = ae.OutputStates.GetAvatarStateV2(hasAction4.avatarAddress);
+                                bool isClear = avatarState.stageMap.ContainsKey(hasAction4.stageId);
                                 WriteHackAndSlash(
                                     hasAction4.Id,
                                     ae.InputContext.BlockIndex,
                                     ae.InputContext.Signer,
                                     hasAction4.avatarAddress,
-                                    "N/A",
+                                    avatarState.name,
                                     hasAction4.stageId,
-                                    hasAction4.Result is { IsClear: true });
+                                    isClear);
                             }
 
                             if (action.InnerAction is HackAndSlash5 hasAction5)
                             {
+                                AvatarState avatarState = ae.OutputStates.GetAvatarStateV2(hasAction5.avatarAddress);
+                                bool isClear = avatarState.stageMap.ContainsKey(hasAction5.stageId);
                                 WriteHackAndSlash(
                                     hasAction5.Id,
                                     ae.InputContext.BlockIndex,
                                     ae.InputContext.Signer,
                                     hasAction5.avatarAddress,
-                                    "N/A",
+                                    avatarState.name,
                                     hasAction5.stageId,
-                                    hasAction5.Result is { IsClear: true });
+                                    isClear);
                             }
                         }
                     }
@@ -332,11 +340,7 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
 
         private List<ActionEvaluation> EvaluateBlock(Block<NCAction> block)
         {
-            var evList = block.Evaluate(
-                DateTimeOffset.Now,
-                address => _baseChain.GetState(address, block.Hash),
-                (address, currency) =>
-                    _baseChain.GetBalance(address, currency, block.Hash)).ToList();
+            var evList = _baseChain.ExecuteActions(block, StateCompleterSet<NCAction>.Reject).ToList();
             return evList;
         }
 
