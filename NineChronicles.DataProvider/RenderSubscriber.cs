@@ -142,22 +142,7 @@ namespace NineChronicles.DataProvider
                 var block = b.NewTip;
                 _blockTimeOffset = block.Timestamp.UtcDateTime;
                 _miner = block.Miner;
-                _blockList.Add(new BlockModel()
-                {
-                    Index = block.Index,
-                    Hash = block.Hash.ToString(),
-                    Miner = block.Miner.ToString(),
-                    Difficulty = block.Difficulty,
-                    Nonce = block.Nonce.ToString(),
-                    PreviousHash = block.PreviousHash.ToString(),
-                    ProtocolVersion = block.ProtocolVersion,
-                    PublicKey = block.PublicKey!.ToString(),
-                    StateRootHash = block.StateRootHash.ToString(),
-                    TotalDifficulty = (long)block.TotalDifficulty,
-                    TxCount = block.Transactions.Count(),
-                    TxHash = block.TxHash.ToString(),
-                    TimeStamp = block.Timestamp.UtcDateTime,
-                });
+                _blockList.Add(BlockData.GetBlockInfo(block));
 
                 foreach (var transaction in block.Transactions)
                 {
@@ -512,7 +497,7 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } has)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            var avatarModel = Avatar.GetAvatarInfo((Nekoyume.Action.ActionBase.ActionEvaluation<GameAction>)ev, has.AvatarAddress, has.RuneInfos, _blockTimeOffset);
+                            var avatarModel = Avatar.GetAvatarInfo(ev.OutputStates, ev.Signer, has.AvatarAddress, has.RuneInfos, _blockTimeOffset);
                             AvatarState avatarState = ev.OutputStates.GetAvatarStateV2(has.AvatarAddress);
                             bool isClear = avatarState.stageMap.ContainsKey(has.StageId);
                             var itemSlotStateAddress = ItemSlotState.DeriveAddress(has.AvatarAddress, BattleType.Adventure);

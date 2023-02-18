@@ -1,3 +1,14 @@
+using Bencodex.Types;
+using Lib9c.DevExtensions.Model;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using NineChronicles.DataProvider.DataRendering;
+using NineChronicles.DataProvider.Store;
+using NineChronicles.DataProvider.Store.Models;
+
 namespace NineChronicles.DataProvider.Tools.SubCommand
 {
     using System;
@@ -38,6 +49,11 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
         private List<string> _agentFiles;
         private List<string> _avatarFiles;
         private List<string> _hasFiles;
+        private IDbContextFactory<NineChroniclesContext> _dbContextFactory;
+        private MySqlStore mySqlStore;
+        protected const string ConnectionStringFormat = "server=localhost;database={0};uid=root;port=3306;";
+        protected NineChroniclesContext Context;
+        protected ServiceCollection Services;
 
         [Command(Description = "Migrate action data in rocksdb store to mysql db.")]
         public void Migration(
@@ -89,6 +105,30 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
             };
 
             _connectionString = builder.ConnectionString;
+
+            var connectionString = _connectionString;
+
+            var services = new ServiceCollection();
+            services.AddDbContextFactory<NineChroniclesContext>(options =>
+            {
+                options.UseMySql(
+                    connectionString,
+                    ServerVersion.AutoDetect(
+                        connectionString),
+                    b => b.MigrationsAssembly("NineChronicles.DataProvider.Executable"));
+            });
+            services.AddSingleton<MySqlStore>();
+            var dbContextOptions =
+                new DbContextOptionsBuilder<NineChroniclesContext>()
+                    .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)).Options;
+            Context = new NineChroniclesContext(dbContextOptions);
+            var serviceCollection = new ServiceCollection();
+            IServiceProvider provider = serviceCollection.BuildServiceProvider();
+            _dbContextFactory = new DbContextFactory<NineChroniclesContext>(
+                provider,
+                dbContextOptions,
+                new DbContextFactorySource<NineChroniclesContext>());
+            mySqlStore = new MySqlStore(_dbContextFactory);
 
             Console.WriteLine("Setting up RocksDBStore...");
             if (rocksdbStoreType == "new")
@@ -187,6 +227,8 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                         _baseStore.IterateIndexes(_baseChain.Id, offset + offsetIdx ?? 0 + offsetIdx, limitInterval).Select((value, i) => new { i, value }))
                     {
                         var block = _baseStore.GetBlock<NCAction>(item.value);
+                        var storeBlockList = new List<BlockModel> {BlockData.GetBlockInfo(block)};
+                        mySqlStore.StoreBlockList(storeBlockList);
                         taskArray[item.i] = Task.Factory.StartNew(() =>
                         {
                             List<ActionEvaluation> actionEvaluations = EvaluateBlock(block);
@@ -249,8 +291,12 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                         if (ae.Action is PolymorphicAction<ActionBase> action)
                         {
                             // avatarNames will be stored as "N/A" for optimzation
-                            if (action.InnerAction is HackAndSlash hasAction )
+                            if (action.InnerAction is HackAndSlash hasAction)
                             {
+                                var avatarModel = DataRendering.Avatar.GetAvatarInfo(ae.OutputStates, ae.InputContext.Signer,
+                                    hasAction.AvatarAddress, hasAction.RuneInfos, DateTimeOffset.Now);
+                                var storeAvatarList = new List<AvatarModel> {avatarModel};
+                                mySqlStore.StoreAvatarList(storeAvatarList);
                                 AvatarState avatarState = ae.OutputStates.GetAvatarStateV2(hasAction.AvatarAddress);
                                 bool isClear = avatarState.stageMap.ContainsKey(hasAction.StageId);
                                 WriteHackAndSlash(
@@ -260,6 +306,24 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                                     hasAction.AvatarAddress,
                                     avatarState.name,
                                     hasAction.StageId,
+                                    isClear);
+                            }
+
+                            if (action.InnerAction is HackAndSlash19 hasAction19)
+                            {
+                                var avatarModel = DataRendering.Avatar.GetAvatarInfo(ae.OutputStates, ae.InputContext.Signer,
+                                    hasAction19.AvatarAddress, hasAction19.RuneInfos, DateTimeOffset.Now);
+                                var storeAvatarList = new List<AvatarModel> {avatarModel};
+                                mySqlStore.StoreAvatarList(storeAvatarList);
+                                AvatarState avatarState = ae.OutputStates.GetAvatarStateV2(hasAction19.AvatarAddress);
+                                bool isClear = avatarState.stageMap.ContainsKey(hasAction19.StageId);
+                                WriteHackAndSlash(
+                                    hasAction19.Id,
+                                    ae.InputContext.BlockIndex,
+                                    ae.InputContext.Signer,
+                                    hasAction19.AvatarAddress,
+                                    avatarState.name,
+                                    hasAction19.StageId,
                                     isClear);
                             }
 
@@ -441,5 +505,34 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                 $"{blockIndex.ToString()}");
             Console.WriteLine("Writing HackAndSlash action in block #{0}", blockIndex);
         }
+
+        public static IHostBuilder CreateHostBuilder(string[] args)
+            => Host.CreateDefaultBuilder(args)
+                .ConfigureServices(services =>
+                {
+                    services.AddDbContextFactory<NineChroniclesContext>(options =>
+                    {
+                        // Get configuration from appsettings or env
+                        var configurationBuilder = new ConfigurationBuilder()
+                            .AddJsonFile("appsettings.json")
+                            .AddEnvironmentVariables("NC_");
+                        IConfiguration config = configurationBuilder.Build();
+                        var headlessConfig = new Configuration();
+                        config.Bind(headlessConfig);
+                        if (headlessConfig.MySqlConnectionString != string.Empty)
+                        {
+                            args = new[] { headlessConfig.MySqlConnectionString };
+                        }
+
+                        if (args.Length == 1)
+                        {
+                            options.UseMySql(
+                                args[0],
+                                ServerVersion.AutoDetect(
+                                    args[0]),
+                                b => b.MigrationsAssembly("NineChronicles.DataProvider.Executable"));
+                        }
+                    });
+                });
     }
 }

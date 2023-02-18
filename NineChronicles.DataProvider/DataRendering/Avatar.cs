@@ -5,6 +5,7 @@
     using System.Linq;
     using Bencodex.Types;
     using Libplanet;
+    using Libplanet.Action;
     using Nekoyume.Action;
     using Nekoyume.Battle;
     using Nekoyume.Extensions;
@@ -18,13 +19,14 @@
     public static class Avatar
     {
            public static AvatarModel GetAvatarInfo(
-               ActionBase.ActionEvaluation<GameAction> ev,
+               IAccountStateDelta outputStates,
+               Address signer,
                Address avatarAddress,
                List<RuneSlotInfo> runeInfos,
                DateTimeOffset blockTime)
         {
-            AvatarState avatarState = ev.OutputStates.GetAvatarStateV2(avatarAddress);
-            var sheets = ev.OutputStates.GetSheets(
+            AvatarState avatarState = outputStates.GetAvatarStateV2(avatarAddress);
+            var sheets = outputStates.GetSheets(
                 sheetTypes: new[]
                 {
                     typeof(CharacterSheet),
@@ -34,7 +36,7 @@
                 });
 
             var itemSlotStateAddress = ItemSlotState.DeriveAddress(avatarAddress, BattleType.Adventure);
-            var itemSlotState = ev.OutputStates.TryGetState(itemSlotStateAddress, out List rawItemSlotState)
+            var itemSlotState = outputStates.TryGetState(itemSlotStateAddress, out List rawItemSlotState)
                 ? new ItemSlotState(rawItemSlotState)
                 : new ItemSlotState(BattleType.Adventure);
             var equipmentInventory = avatarState.inventory.Equipments;
@@ -51,7 +53,7 @@
             var runeStates = new List<RuneState>();
             foreach (var address in runeInfos.Select(info => RuneState.DeriveAddress(avatarAddress, info.RuneId)))
             {
-                if (ev.OutputStates.TryGetState(address, out List rawRuneState))
+                if (outputStates.TryGetState(address, out List rawRuneState))
                 {
                     runeStates.Add(new RuneState(rawRuneState));
                 }
@@ -120,7 +122,7 @@
             var avatarModel = new AvatarModel()
             {
                 Address = avatarAddress.ToString(),
-                AgentAddress = ev.Signer.ToString(),
+                AgentAddress = signer.ToString(),
                 Name = avatarName,
                 AvatarLevel = avatarLevel,
                 TitleId = avatarTitleId,
