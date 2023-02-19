@@ -8,8 +8,8 @@
 
     public static class BlockData
     {
-           public static BlockModel GetBlockInfo(
-               Block<PolymorphicAction<ActionBase>> block)
+        public static BlockModel GetBlockInfo(
+            Block<PolymorphicAction<ActionBase>> block)
         {
             var blockModel = new BlockModel()
             {

@@ -16,14 +16,14 @@
     using NineChronicles.DataProvider.Store.Models;
     using Serilog;
 
-    public static class Avatar
+    public static class AvatarData
     {
-           public static AvatarModel GetAvatarInfo(
-               IAccountStateDelta outputStates,
-               Address signer,
-               Address avatarAddress,
-               List<RuneSlotInfo> runeInfos,
-               DateTimeOffset blockTime)
+        public static AvatarModel GetAvatarInfo(
+            IAccountStateDelta outputStates,
+            Address signer,
+            Address avatarAddress,
+            List<RuneSlotInfo> runeInfos,
+            DateTimeOffset blockTime)
         {
             AvatarState avatarState = outputStates.GetAvatarStateV2(avatarAddress);
             var sheets = outputStates.GetSheets(
