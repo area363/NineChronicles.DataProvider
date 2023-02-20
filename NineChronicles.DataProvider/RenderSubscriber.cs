@@ -543,24 +543,7 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } mc)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            ev.OutputStates.TryGetStakeState(ev.Signer, out StakeState stakeState);
-                            var agentState = ev.PreviousStates.GetAgentState(ev.Signer);
-                            Address collectionAddress = MonsterCollectionState.DeriveAddress(ev.Signer, agentState.MonsterCollectionRound);
-                            ev.PreviousStates.TryGetState(collectionAddress, out Dictionary stateDict);
-                            var monsterCollectionState = new MonsterCollectionState(stateDict);
-                            var currency = ev.OutputStates.GetGoldCurrency();
-                            var migrationAmount = ev.PreviousStates.GetBalance(monsterCollectionState.address, currency);
-                            var migrationStartBlockIndex = ev.BlockIndex;
-                            var stakeStartBlockIndex = stakeState.StartedBlockIndex;
-                            _mmcList.Add(new MigrateMonsterCollectionModel()
-                            {
-                                BlockIndex = ev.BlockIndex,
-                                AgentAddress = ev.Signer.ToString(),
-                                MigrationAmount = Convert.ToDecimal(migrationAmount.GetQuantityString()),
-                                MigrationStartBlockIndex = migrationStartBlockIndex,
-                                StakeStartBlockIndex = stakeStartBlockIndex,
-                                TimeStamp = _blockTimeOffset,
-                            });
+                            _mmcList.Add(MigrateMonsterCollectionData.GetMigrateMonsterCollectionInfo(ev, _blockTimeOffset));
                             var end = DateTimeOffset.UtcNow;
                             Log.Debug("Stored MigrateMonsterCollection action in block #{index}. Time Taken: {time} ms.", ev.BlockIndex, (end - start).Milliseconds);
                         }
@@ -576,72 +559,15 @@ namespace NineChronicles.DataProvider
                 {
                     try
                     {
-                        if (ev.Action is Grinding grind)
+                        if (ev.Action is { } grinding)
                         {
                             var start = DateTimeOffset.UtcNow;
 
-                            AvatarState prevAvatarState = ev.PreviousStates.GetAvatarStateV2(grind.AvatarAddress);
-                            AgentState agentState = ev.PreviousStates.GetAgentState(ev.Signer);
-                            var previousStates = ev.PreviousStates;
-                            Address monsterCollectionAddress = MonsterCollectionState.DeriveAddress(
-                                ev.Signer,
-                                agentState.MonsterCollectionRound
-                            );
-                            Dictionary<Type, (Address, ISheet)> sheets = previousStates.GetSheets(sheetTypes: new[]
-                            {
-                                typeof(CrystalEquipmentGrindingSheet),
-                                typeof(CrystalMonsterCollectionMultiplierSheet),
-                                typeof(MaterialItemSheet),
-                                typeof(StakeRegularRewardSheet),
-                            });
+                            var grindList = GrindingData.GetGrindingInfo(ev, grinding, _blockTimeOffset);
 
-                            List<Equipment> equipmentList = new List<Equipment>();
-                            foreach (var equipmentId in grind.EquipmentIds)
+                            foreach (var grind in grindList)
                             {
-                                if (prevAvatarState.inventory.TryGetNonFungibleItem(equipmentId, out Equipment equipment))
-                                {
-                                    equipmentList.Add(equipment);
-                                }
-                            }
-
-                            Currency currency = previousStates.GetGoldCurrency();
-                            FungibleAssetValue stakedAmount = 0 * currency;
-                            if (previousStates.TryGetStakeState(ev.Signer, out StakeState stakeState))
-                            {
-                                stakedAmount = previousStates.GetBalance(stakeState.address, currency);
-                            }
-                            else
-                            {
-                                if (previousStates.TryGetState(monsterCollectionAddress, out Dictionary _))
-                                {
-                                    stakedAmount = previousStates.GetBalance(monsterCollectionAddress, currency);
-                                }
-                            }
-
-                            FungibleAssetValue crystal = CrystalCalculator.CalculateCrystal(
-                                ev.Signer,
-                                equipmentList,
-                                stakedAmount,
-                                false,
-                                sheets.GetSheet<CrystalEquipmentGrindingSheet>(),
-                                sheets.GetSheet<CrystalMonsterCollectionMultiplierSheet>(),
-                                sheets.GetSheet<StakeRegularRewardSheet>()
-                            );
-
-                            foreach (var equipment in equipmentList)
-                            {
-                                _grindList.Add(new GrindingModel()
-                                {
-                                    Id = grind.Id.ToString(),
-                                    AgentAddress = ev.Signer.ToString(),
-                                    AvatarAddress = grind.AvatarAddress.ToString(),
-                                    EquipmentItemId = equipment.ItemId.ToString(),
-                                    EquipmentId = equipment.Id,
-                                    EquipmentLevel = equipment.level,
-                                    Crystal = Convert.ToDecimal(crystal.GetQuantityString()),
-                                    BlockIndex = ev.BlockIndex,
-                                    TimeStamp = _blockTimeOffset,
-                                });
+                                _grindList.Add(grind);
                             }
 
                             var end = DateTimeOffset.UtcNow;
