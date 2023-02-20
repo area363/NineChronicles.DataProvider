@@ -293,7 +293,7 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                             // avatarNames will be stored as "N/A" for optimzation
                             if (action.InnerAction is HackAndSlash hasAction)
                             {
-                                var avatarModel = DataRendering.Avatar.GetAvatarInfo(ae.OutputStates, ae.InputContext.Signer,
+                                var avatarModel = AvatarData.GetAvatarInfo(ae.OutputStates, ae.InputContext.Signer,
                                     hasAction.AvatarAddress, hasAction.RuneInfos, DateTimeOffset.Now);
                                 var storeAvatarList = new List<AvatarModel> {avatarModel};
                                 mySqlStore.StoreAvatarList(storeAvatarList);
@@ -311,7 +311,7 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
 
                             if (action.InnerAction is HackAndSlash19 hasAction19)
                             {
-                                var avatarModel = DataRendering.Avatar.GetAvatarInfo(ae.OutputStates, ae.InputContext.Signer,
+                                var avatarModel = AvatarData.GetAvatarInfo(ae.OutputStates, ae.InputContext.Signer,
                                     hasAction19.AvatarAddress, hasAction19.RuneInfos, DateTimeOffset.Now);
                                 var storeAvatarList = new List<AvatarModel> {avatarModel};
                                 mySqlStore.StoreAvatarList(storeAvatarList);

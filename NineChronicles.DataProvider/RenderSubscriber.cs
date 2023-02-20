@@ -287,15 +287,7 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } combinationConsumable)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            _ccList.Add(new CombinationConsumableModel()
-                            {
-                                Id = combinationConsumable.Id.ToString(),
-                                AgentAddress = ev.Signer.ToString(),
-                                AvatarAddress = combinationConsumable.avatarAddress.ToString(),
-                                RecipeId = combinationConsumable.recipeId,
-                                SlotIndex = combinationConsumable.slotIndex,
-                                BlockIndex = ev.BlockIndex,
-                            });
+                            _ccList.Add(CombinationConsumableData.GetCombinationConsumableInfo(ev, combinationConsumable));
 
                             var end = DateTimeOffset.UtcNow;
                             Log.Debug("Stored CombinationConsumable action in block #{index}. Time Taken: {time} ms.", ev.BlockIndex, (end - start).Milliseconds);
@@ -315,106 +307,17 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } combinationEquipment)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            var previousStates = ev.PreviousStates;
-                            _ceList.Add(new CombinationEquipmentModel()
-                            {
-                                Id = combinationEquipment.Id.ToString(),
-                                AgentAddress = ev.Signer.ToString(),
-                                AvatarAddress = combinationEquipment.avatarAddress.ToString(),
-                                RecipeId = combinationEquipment.recipeId,
-                                SlotIndex = combinationEquipment.slotIndex,
-                                SubRecipeId = combinationEquipment.subRecipeId ?? 0,
-                                BlockIndex = ev.BlockIndex,
-                            });
+                            _ceList.Add(CombinationEquipmentData.GetCombinationEquipmentInfo(ev, combinationEquipment));
                             if (combinationEquipment.payByCrystal)
                             {
-                                Currency crystalCurrency = CrystalCalculator.CRYSTAL;
-                                var prevCrystalBalance = previousStates.GetBalance(
-                                    ev.Signer,
-                                    crystalCurrency);
-                                var outputCrystalBalance = ev.OutputStates.GetBalance(
-                                    ev.Signer,
-                                    crystalCurrency);
-                                var burntCrystal = prevCrystalBalance - outputCrystalBalance;
-                                var requiredFungibleItems = new Dictionary<int, int>();
-                                Dictionary<Type, (Address, ISheet)> sheets = previousStates.GetSheets(
-                                    sheetTypes: new[]
-                                    {
-                                        typeof(EquipmentItemRecipeSheet),
-                                        typeof(EquipmentItemSheet),
-                                        typeof(MaterialItemSheet),
-                                        typeof(EquipmentItemSubRecipeSheetV2),
-                                        typeof(EquipmentItemOptionSheet),
-                                        typeof(SkillSheet),
-                                        typeof(CrystalMaterialCostSheet),
-                                        typeof(CrystalFluctuationSheet),
-                                    });
-                                var materialItemSheet = sheets.GetSheet<MaterialItemSheet>();
-                                var equipmentItemRecipeSheet = sheets.GetSheet<EquipmentItemRecipeSheet>();
-                                equipmentItemRecipeSheet.TryGetValue(
-                                    combinationEquipment.recipeId,
-                                    out var recipeRow);
-                                materialItemSheet.TryGetValue(recipeRow!.MaterialId, out var materialRow);
-                                if (requiredFungibleItems.ContainsKey(materialRow!.Id))
+                                var replaceCombinationEquipmentMaterialList = ReplaceCombinationEquipmentMaterialData
+                                    .GetReplaceCombinationEquipmentMaterialInfo(
+                                        ev,
+                                        combinationEquipment,
+                                        _blockTimeOffset);
+                                foreach (var replaceCombinationEquipmentMaterial in replaceCombinationEquipmentMaterialList)
                                 {
-                                    requiredFungibleItems[materialRow.Id] += recipeRow.MaterialCount;
-                                }
-                                else
-                                {
-                                    requiredFungibleItems[materialRow.Id] = recipeRow.MaterialCount;
-                                }
-
-                                if (combinationEquipment.subRecipeId.HasValue)
-                                {
-                                    var equipmentItemSubRecipeSheetV2 = sheets.GetSheet<EquipmentItemSubRecipeSheetV2>();
-                                    equipmentItemSubRecipeSheetV2.TryGetValue(combinationEquipment.subRecipeId.Value, out var subRecipeRow);
-
-                                    // Validate SubRecipe Material
-                                    for (var i = subRecipeRow!.Materials.Count; i > 0; i--)
-                                    {
-                                        var materialInfo = subRecipeRow.Materials[i - 1];
-                                        materialItemSheet.TryGetValue(materialInfo.Id, out materialRow);
-
-                                        if (requiredFungibleItems.ContainsKey(materialRow!.Id))
-                                        {
-                                            requiredFungibleItems[materialRow.Id] += materialInfo.Count;
-                                        }
-                                        else
-                                        {
-                                            requiredFungibleItems[materialRow.Id] = materialInfo.Count;
-                                        }
-                                    }
-                                }
-
-                                var inventory = ev.PreviousStates
-                                    .GetAvatarStateV2(combinationEquipment.avatarAddress).inventory;
-                                foreach (var pair in requiredFungibleItems.OrderBy(pair => pair.Key))
-                                {
-                                    var itemId = pair.Key;
-                                    var requiredCount = pair.Value;
-                                    if (materialItemSheet.TryGetValue(itemId, out materialRow))
-                                    {
-                                        int itemCount = inventory.TryGetItem(itemId, out Inventory.Item item)
-                                            ? item.count
-                                            : 0;
-                                        if (itemCount < requiredCount && combinationEquipment.payByCrystal)
-                                        {
-                                            _replaceCombinationEquipmentMaterialList.Add(
-                                                new ReplaceCombinationEquipmentMaterialModel()
-                                                {
-                                                    Id = combinationEquipment.Id.ToString(),
-                                                    BlockIndex = ev.BlockIndex,
-                                                    AgentAddress = ev.Signer.ToString(),
-                                                    AvatarAddress =
-                                                        combinationEquipment.avatarAddress.ToString(),
-                                                    ReplacedMaterialId = itemId,
-                                                    ReplacedMaterialCount = requiredCount - itemCount,
-                                                    BurntCrystal =
-                                                        Convert.ToDecimal(burntCrystal.GetQuantityString()),
-                                                    TimeStamp = _blockTimeOffset,
-                                                });
-                                        }
-                                    }
+                                    _replaceCombinationEquipmentMaterialList.Add(replaceCombinationEquipmentMaterial);
                                 }
                             }
 
@@ -431,10 +334,10 @@ namespace NineChronicles.DataProvider
 
                             if (slotState?.Result.itemUsable.ItemType is ItemType.Equipment)
                             {
-                                ProcessEquipmentData(
+                                _eqList.Add(EquipmentData.GetEquipmentInfo(
                                     ev.Signer,
                                     combinationEquipment.avatarAddress,
-                                    (Equipment)slotState.Result.itemUsable);
+                                    (Equipment)slotState.Result.itemUsable));
                             }
 
                             end = DateTimeOffset.UtcNow;
@@ -533,10 +436,10 @@ namespace NineChronicles.DataProvider
 
                             if (slotState?.Result.itemUsable.ItemType is ItemType.Equipment)
                             {
-                                ProcessEquipmentData(
+                                _eqList.Add(EquipmentData.GetEquipmentInfo(
                                     ev.Signer,
                                     itemEnhancement.avatarAddress,
-                                    (Equipment)slotState.Result.itemUsable);
+                                    (Equipment)slotState.Result.itemUsable));
                             }
 
                             end = DateTimeOffset.UtcNow;
@@ -707,10 +610,10 @@ namespace NineChronicles.DataProvider
 
                                     if (equipment is { } equipmentNotNull)
                                     {
-                                        ProcessEquipmentData(
+                                        _eqList.Add(EquipmentData.GetEquipmentInfo(
                                             ev.Signer,
                                             buy.buyerAvatarAddress,
-                                            equipmentNotNull);
+                                            equipmentNotNull));
                                     }
                                 }
                             }
@@ -1671,10 +1574,10 @@ namespace NineChronicles.DataProvider
 
                                 if (slotState?.Result.itemUsable.ItemType is ItemType.Equipment)
                                 {
-                                    ProcessEquipmentData(
+                                    _eqList.Add(EquipmentData.GetEquipmentInfo(
                                         ev.Signer,
                                         combinationEquipment.avatarAddress,
-                                        (Equipment)slotState.Result.itemUsable);
+                                        (Equipment)slotState.Result.itemUsable));
                                 }
 
                                 Log.Debug(
@@ -1693,10 +1596,10 @@ namespace NineChronicles.DataProvider
 
                                 if (slotState?.Result.itemUsable.ItemType is ItemType.Equipment)
                                 {
-                                    ProcessEquipmentData(
+                                    _eqList.Add(EquipmentData.GetEquipmentInfo(
                                         ev.Signer,
                                         itemEnhancement.avatarAddress,
-                                        (Equipment)slotState.Result.itemUsable);
+                                        (Equipment)slotState.Result.itemUsable));
                                 }
 
                                 Log.Debug(
@@ -1742,10 +1645,10 @@ namespace NineChronicles.DataProvider
 
                                         if (equipment is { } equipmentNotNull)
                                         {
-                                            ProcessEquipmentData(
-                                                purchaseInfo.SellerAvatarAddress,
+                                            _eqList.Add(EquipmentData.GetEquipmentInfo(
                                                 purchaseInfo.SellerAgentAddress,
-                                                equipmentNotNull);
+                                                purchaseInfo.SellerAvatarAddress,
+                                                equipmentNotNull));
                                         }
                                     }
                                 }
@@ -1948,24 +1851,6 @@ namespace NineChronicles.DataProvider
                 });
 
             return Task.CompletedTask;
-        }
-
-        private void ProcessEquipmentData(
-            Address agentAddress,
-            Address avatarAddress,
-            Equipment equipment)
-        {
-            var cp = CPHelper.GetCP(equipment);
-            _eqList.Add(new EquipmentModel()
-            {
-                ItemId = equipment.ItemId.ToString(),
-                AgentAddress = agentAddress.ToString(),
-                AvatarAddress = avatarAddress.ToString(),
-                EquipmentId = equipment.Id,
-                Cp = cp,
-                Level = equipment.level,
-                ItemSubType = equipment.ItemSubType.ToString(),
-            });
         }
 
         private void ProcessAgentAvatarData(ActionBase.ActionEvaluation<ActionBase> ev)
