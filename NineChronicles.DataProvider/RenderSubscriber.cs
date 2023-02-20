@@ -362,70 +362,17 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } itemEnhancement)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            AvatarState avatarState = ev.OutputStates.GetAvatarStateV2(itemEnhancement.avatarAddress);
-                            var previousStates = ev.PreviousStates;
-                            AvatarState prevAvatarState = previousStates.GetAvatarStateV2(itemEnhancement.avatarAddress);
-
-                            int prevEquipmentLevel = 0;
-                            if (prevAvatarState.inventory.TryGetNonFungibleItem(itemEnhancement.itemId, out ItemUsable prevEnhancementItem)
-                                && prevEnhancementItem is Equipment prevEnhancementEquipment)
+                            if (ItemEnhancementFailData.GetItemEnhancementFailInfo(
+                                    ev,
+                                    itemEnhancement,
+                                    _blockTimeOffset) is { } itemEnhancementFailModel)
                             {
-                                   prevEquipmentLevel = prevEnhancementEquipment.level;
+                                _itemEnhancementFailList.Add(itemEnhancementFailModel);
                             }
 
-                            int outputEquipmentLevel = 0;
-                            if (avatarState.inventory.TryGetNonFungibleItem(itemEnhancement.itemId, out ItemUsable outputEnhancementItem)
-                                && outputEnhancementItem is Equipment outputEnhancementEquipment)
-                            {
-                                outputEquipmentLevel = outputEnhancementEquipment.level;
-                            }
-
-                            Currency ncgCurrency = ev.OutputStates.GetGoldCurrency();
-                            var prevNCGBalance = previousStates.GetBalance(
-                                ev.Signer,
-                                ncgCurrency);
-                            var outputNCGBalance = ev.OutputStates.GetBalance(
-                                ev.Signer,
-                                ncgCurrency);
-                            var burntNCG = prevNCGBalance - outputNCGBalance;
-
-                            if (prevEquipmentLevel == outputEquipmentLevel)
-                            {
-                                Currency crystalCurrency = CrystalCalculator.CRYSTAL;
-                                var prevCrystalBalance = previousStates.GetBalance(
-                                    ev.Signer,
-                                    crystalCurrency);
-                                var outputCrystalBalance = ev.OutputStates.GetBalance(
-                                    ev.Signer,
-                                    crystalCurrency);
-                                var gainedCrystal = outputCrystalBalance - prevCrystalBalance;
-                                _itemEnhancementFailList.Add(new ItemEnhancementFailModel()
-                                {
-                                    Id = itemEnhancement.Id.ToString(),
-                                    BlockIndex = ev.BlockIndex,
-                                    AgentAddress = ev.Signer.ToString(),
-                                    AvatarAddress = itemEnhancement.avatarAddress.ToString(),
-                                    EquipmentItemId = itemEnhancement.itemId.ToString(),
-                                    MaterialItemId = itemEnhancement.materialId.ToString(),
-                                    EquipmentLevel = outputEquipmentLevel,
-                                    GainedCrystal = Convert.ToDecimal(gainedCrystal.GetQuantityString()),
-                                    BurntNCG = Convert.ToDecimal(burntNCG.GetQuantityString()),
-                                    TimeStamp = _blockTimeOffset,
-                                });
-                            }
-
-                            _ieList.Add(new ItemEnhancementModel()
-                            {
-                                Id = itemEnhancement.Id.ToString(),
-                                AgentAddress = ev.Signer.ToString(),
-                                AvatarAddress = itemEnhancement.avatarAddress.ToString(),
-                                ItemId = itemEnhancement.itemId.ToString(),
-                                MaterialId = itemEnhancement.materialId.ToString(),
-                                SlotIndex = itemEnhancement.slotIndex,
-                                BurntNCG = Convert.ToDecimal(burntNCG.GetQuantityString()),
-                                BlockIndex = ev.BlockIndex,
-                            });
-
+                            _ieList.Add(ItemEnhancementData.GetItemEnhancementInfo(
+                                ev,
+                                itemEnhancement));
                             var end = DateTimeOffset.UtcNow;
                             Log.Debug("Stored ItemEnhancement action in block #{index}. Time Taken: {time} ms.", ev.BlockIndex, (end - start).Milliseconds);
                             start = DateTimeOffset.UtcNow;
@@ -482,112 +429,49 @@ namespace NineChronicles.DataProvider
                                 if (orderItem.ItemType == ItemType.Equipment)
                                 {
                                     Equipment equipment = (Equipment)orderItem;
-                                    _buyShopEquipmentsList.Add(new ShopHistoryEquipmentModel()
-                                    {
-                                        OrderId = purchaseInfo.OrderId.ToString(),
-                                        TxId = string.Empty,
-                                        BlockIndex = ev.BlockIndex,
-                                        BlockHash = string.Empty,
-                                        ItemId = equipment.ItemId.ToString(),
-                                        SellerAvatarAddress = purchaseInfo.SellerAvatarAddress.ToString(),
-                                        BuyerAvatarAddress = buy.buyerAvatarAddress.ToString(),
-                                        Price = decimal.Parse(purchaseInfo.Price.ToString().Split(" ").FirstOrDefault()!),
-                                        ItemType = equipment.ItemType.ToString(),
-                                        ItemSubType = equipment.ItemSubType.ToString(),
-                                        Id = equipment.Id,
-                                        BuffSkillCount = equipment.BuffSkills.Count,
-                                        ElementalType = equipment.ElementalType.ToString(),
-                                        Grade = equipment.Grade,
-                                        SetId = equipment.SetId,
-                                        SkillsCount = equipment.Skills.Count,
-                                        SpineResourcePath = equipment.SpineResourcePath,
-                                        RequiredBlockIndex = equipment.RequiredBlockIndex,
-                                        NonFungibleId = equipment.NonFungibleId.ToString(),
-                                        TradableId = equipment.TradableId.ToString(),
-                                        UniqueStatType = equipment.UniqueStatType.ToString(),
-                                        ItemCount = itemCount,
-                                        TimeStamp = _blockTimeOffset,
-                                    });
+                                    _buyShopEquipmentsList.Add(ShopHistoryEquipmentData.GetShopHistoryEquipmentInfo(
+                                        ev,
+                                        buy,
+                                        purchaseInfo,
+                                        equipment,
+                                        itemCount,
+                                        _blockTimeOffset));
                                 }
 
                                 if (orderItem.ItemType == ItemType.Costume)
                                 {
                                     Costume costume = (Costume)orderItem;
-                                    _buyShopCostumesList.Add(new ShopHistoryCostumeModel()
-                                    {
-                                        OrderId = purchaseInfo.OrderId.ToString(),
-                                        TxId = string.Empty,
-                                        BlockIndex = ev.BlockIndex,
-                                        BlockHash = string.Empty,
-                                        ItemId = costume.ItemId.ToString(),
-                                        SellerAvatarAddress = purchaseInfo.SellerAvatarAddress.ToString(),
-                                        BuyerAvatarAddress = buy.buyerAvatarAddress.ToString(),
-                                        Price = decimal.Parse(purchaseInfo.Price.ToString().Split(" ").FirstOrDefault()!),
-                                        ItemType = costume.ItemType.ToString(),
-                                        ItemSubType = costume.ItemSubType.ToString(),
-                                        Id = costume.Id,
-                                        ElementalType = costume.ElementalType.ToString(),
-                                        Grade = costume.Grade,
-                                        Equipped = costume.Equipped,
-                                        SpineResourcePath = costume.SpineResourcePath,
-                                        RequiredBlockIndex = costume.RequiredBlockIndex,
-                                        NonFungibleId = costume.NonFungibleId.ToString(),
-                                        TradableId = costume.TradableId.ToString(),
-                                        ItemCount = itemCount,
-                                        TimeStamp = _blockTimeOffset,
-                                    });
+                                    _buyShopCostumesList.Add(ShopHistoryCostumeData.GetShopHistoryCostumeInfo(
+                                        ev,
+                                        buy,
+                                        purchaseInfo,
+                                        costume,
+                                        itemCount,
+                                        _blockTimeOffset));
                                 }
 
                                 if (orderItem.ItemType == ItemType.Material)
                                 {
                                     Material material = (Material)orderItem;
-                                    _buyShopMaterialsList.Add(new ShopHistoryMaterialModel()
-                                    {
-                                        OrderId = purchaseInfo.OrderId.ToString(),
-                                        TxId = string.Empty,
-                                        BlockIndex = ev.BlockIndex,
-                                        BlockHash = string.Empty,
-                                        ItemId = material.ItemId.ToString(),
-                                        SellerAvatarAddress = purchaseInfo.SellerAvatarAddress.ToString(),
-                                        BuyerAvatarAddress = buy.buyerAvatarAddress.ToString(),
-                                        Price = decimal.Parse(purchaseInfo.Price.ToString().Split(" ").FirstOrDefault()!),
-                                        ItemType = material.ItemType.ToString(),
-                                        ItemSubType = material.ItemSubType.ToString(),
-                                        Id = material.Id,
-                                        ElementalType = material.ElementalType.ToString(),
-                                        Grade = material.Grade,
-                                        ItemCount = itemCount,
-                                        TimeStamp = _blockTimeOffset,
-                                    });
+                                    _buyShopMaterialsList.Add(ShopHistoryMaterialData.GetShopHistoryMaterialInfo(
+                                        ev,
+                                        buy,
+                                        purchaseInfo,
+                                        material,
+                                        itemCount,
+                                        _blockTimeOffset));
                                 }
 
                                 if (orderItem.ItemType == ItemType.Consumable)
                                 {
                                     Consumable consumable = (Consumable)orderItem;
-                                    _buyShopConsumablesList.Add(new ShopHistoryConsumableModel()
-                                    {
-                                        OrderId = purchaseInfo.OrderId.ToString(),
-                                        TxId = string.Empty,
-                                        BlockIndex = ev.BlockIndex,
-                                        BlockHash = string.Empty,
-                                        ItemId = consumable.ItemId.ToString(),
-                                        SellerAvatarAddress = purchaseInfo.SellerAvatarAddress.ToString(),
-                                        BuyerAvatarAddress = buy.buyerAvatarAddress.ToString(),
-                                        Price = decimal.Parse(purchaseInfo.Price.ToString().Split(" ").FirstOrDefault()!),
-                                        ItemType = consumable.ItemType.ToString(),
-                                        ItemSubType = consumable.ItemSubType.ToString(),
-                                        Id = consumable.Id,
-                                        BuffSkillCount = consumable.BuffSkills.Count,
-                                        ElementalType = consumable.ElementalType.ToString(),
-                                        Grade = consumable.Grade,
-                                        SkillsCount = consumable.Skills.Count,
-                                        RequiredBlockIndex = consumable.RequiredBlockIndex,
-                                        NonFungibleId = consumable.NonFungibleId.ToString(),
-                                        TradableId = consumable.TradableId.ToString(),
-                                        MainStat = consumable.MainStat.ToString(),
-                                        ItemCount = itemCount,
-                                        TimeStamp = _blockTimeOffset,
-                                    });
+                                    _buyShopConsumablesList.Add(ShopHistoryConsumableData.GetShopHistoryConsumableInfo(
+                                        ev,
+                                        buy,
+                                        purchaseInfo,
+                                        consumable,
+                                        itemCount,
+                                        _blockTimeOffset));
                                 }
 
                                 if (purchaseInfo.ItemSubType == ItemSubType.Armor
@@ -640,27 +524,7 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } stake)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            ev.OutputStates.TryGetStakeState(ev.Signer, out StakeState stakeState);
-                            var prevStakeStartBlockIndex =
-                                !ev.PreviousStates.TryGetStakeState(ev.Signer, out StakeState prevStakeState)
-                                    ? 0 : prevStakeState.StartedBlockIndex;
-                            var newStakeStartBlockIndex = stakeState.StartedBlockIndex;
-                            var currency = ev.OutputStates.GetGoldCurrency();
-                            var balance = ev.OutputStates.GetBalance(ev.Signer, currency);
-                            var stakeStateAddress = StakeState.DeriveAddress(ev.Signer);
-                            var previousAmount = ev.PreviousStates.GetBalance(stakeStateAddress, currency);
-                            var newAmount = ev.OutputStates.GetBalance(stakeStateAddress, currency);
-                            _stakeList.Add(new StakeModel()
-                            {
-                                BlockIndex = ev.BlockIndex,
-                                AgentAddress = ev.Signer.ToString(),
-                                PreviousAmount = Convert.ToDecimal(previousAmount.GetQuantityString()),
-                                NewAmount = Convert.ToDecimal(newAmount.GetQuantityString()),
-                                RemainingNCG = Convert.ToDecimal(balance.GetQuantityString()),
-                                PrevStakeStartBlockIndex = prevStakeStartBlockIndex,
-                                NewStakeStartBlockIndex = newStakeStartBlockIndex,
-                                TimeStamp = _blockTimeOffset,
-                            });
+                            _stakeList.Add(StakeData.GetStakeInfo(ev, _blockTimeOffset));
                             var end = DateTimeOffset.UtcNow;
                             Log.Debug("Stored Stake action in block #{index}. Time Taken: {time} ms.", ev.BlockIndex, (end - start).Milliseconds);
                         }
