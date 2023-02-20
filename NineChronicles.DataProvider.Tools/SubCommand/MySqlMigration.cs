@@ -211,6 +211,8 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                 {
                     int interval = 100;
                     int limitInterval;
+                    var blockList = new List<BlockModel>();
+                    var txList = new List<TransactionModel>();
                     Task<List<ActionEvaluation>>[] taskArray;
                     if (interval < remainingCount)
                     {
@@ -227,8 +229,14 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                         _baseStore.IterateIndexes(_baseChain.Id, offset + offsetIdx ?? 0 + offsetIdx, limitInterval).Select((value, i) => new { i, value }))
                     {
                         var block = _baseStore.GetBlock<NCAction>(item.value);
-                        var storeBlockList = new List<BlockModel> {BlockData.GetBlockInfo(block)};
-                        mySqlStore.StoreBlockList(storeBlockList);
+                        blockList.Add(BlockData.GetBlockInfo(block));
+                        foreach (var tx in block.Transactions)
+                        {
+                            txList.Add(TransactionData.GetTransactionInfo(block, tx));
+                        }
+
+                        mySqlStore.StoreBlockList(blockList);
+                        mySqlStore.StoreTransactionList(txList);
                         taskArray[item.i] = Task.Factory.StartNew(() =>
                         {
                             List<ActionEvaluation> actionEvaluations = EvaluateBlock(block);

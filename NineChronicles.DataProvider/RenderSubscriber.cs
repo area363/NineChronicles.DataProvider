@@ -152,9 +152,7 @@ namespace NineChronicles.DataProvider
 
                 foreach (var transaction in block.Transactions)
                 {
-                    var actionType = transaction.CustomActions!.Select(action => action.ToString()!.Split('.')
-                        .LastOrDefault()?.Replace(">", string.Empty));
-                    _transactionList.Add(TransactionData.GetTransactionInfo(block, transaction, actionType));
+                    _transactionList.Add(TransactionData.GetTransactionInfo(block, transaction));
                 }
 
                 _renderedBlockCount++;

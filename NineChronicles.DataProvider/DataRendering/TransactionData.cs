@@ -12,10 +12,11 @@
     {
         public static TransactionModel GetTransactionInfo(
             Block<PolymorphicAction<ActionBase>> block,
-            Transaction<PolymorphicAction<ActionBase>> transaction,
-            IEnumerable<string?> actionType
+            Transaction<PolymorphicAction<ActionBase>> transaction
         )
         {
+            var actionType = transaction.CustomActions!.Select(action => action.ToString()!.Split('.')
+                .LastOrDefault()?.Replace(">", string.Empty));
             var transactionModel = new TransactionModel
             {
                 BlockIndex = block.Index,
