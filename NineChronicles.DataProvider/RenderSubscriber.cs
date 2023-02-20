@@ -588,27 +588,10 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } unlockEquipmentRecipe)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            var previousStates = ev.PreviousStates;
-                            Currency crystalCurrency = CrystalCalculator.CRYSTAL;
-                            var prevCrystalBalance = previousStates.GetBalance(
-                                ev.Signer,
-                                crystalCurrency);
-                            var outputCrystalBalance = ev.OutputStates.GetBalance(
-                                ev.Signer,
-                                crystalCurrency);
-                            var burntCrystal = prevCrystalBalance - outputCrystalBalance;
-                            foreach (var recipeId in unlockEquipmentRecipe.RecipeIds)
+                            var unlockEquipmentRecipeList = UnlockEquipmentRecipeData.GetUnlockEquipmentRecipeInfo(ev, unlockEquipmentRecipe, _blockTimeOffset);
+                            foreach (var unlockEquipmentRecipeData in unlockEquipmentRecipeList)
                             {
-                                _unlockEquipmentRecipeList.Add(new UnlockEquipmentRecipeModel()
-                                {
-                                    Id = unlockEquipmentRecipe.Id.ToString(),
-                                    BlockIndex = ev.BlockIndex,
-                                    AgentAddress = ev.Signer.ToString(),
-                                    AvatarAddress = unlockEquipmentRecipe.AvatarAddress.ToString(),
-                                    UnlockEquipmentRecipeId = recipeId,
-                                    BurntCrystal = Convert.ToDecimal(burntCrystal.GetQuantityString()),
-                                    TimeStamp = _blockTimeOffset,
-                                });
+                                _unlockEquipmentRecipeList.Add(unlockEquipmentRecipeData);
                             }
 
                             var end = DateTimeOffset.UtcNow;
@@ -629,27 +612,10 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } unlockWorld)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            var previousStates = ev.PreviousStates;
-                            Currency crystalCurrency = CrystalCalculator.CRYSTAL;
-                            var prevCrystalBalance = previousStates.GetBalance(
-                                ev.Signer,
-                                crystalCurrency);
-                            var outputCrystalBalance = ev.OutputStates.GetBalance(
-                                ev.Signer,
-                                crystalCurrency);
-                            var burntCrystal = prevCrystalBalance - outputCrystalBalance;
-                            foreach (var worldId in unlockWorld.WorldIds)
+                            var unlockWorldList = UnlockWorldData.GetUnlockWorldInfo(ev, unlockWorld, _blockTimeOffset);
+                            foreach (var unlockWorldData in unlockWorldList)
                             {
-                                _unlockWorldList.Add(new UnlockWorldModel()
-                                {
-                                    Id = unlockWorld.Id.ToString(),
-                                    BlockIndex = ev.BlockIndex,
-                                    AgentAddress = ev.Signer.ToString(),
-                                    AvatarAddress = unlockWorld.AvatarAddress.ToString(),
-                                    UnlockWorldId = worldId,
-                                    BurntCrystal = Convert.ToDecimal(burntCrystal.GetQuantityString()),
-                                    TimeStamp = _blockTimeOffset,
-                                });
+                                _unlockWorldList.Add(unlockWorldData);
                             }
 
                             var end = DateTimeOffset.UtcNow;
@@ -670,29 +636,7 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } hasRandomBuff)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            var previousStates = ev.PreviousStates;
-                            AvatarState prevAvatarState = previousStates.GetAvatarStateV2(hasRandomBuff.AvatarAddress);
-                            prevAvatarState.worldInformation.TryGetLastClearedStageId(out var currentStageId);
-                            Currency crystalCurrency = CrystalCalculator.CRYSTAL;
-                            var prevCrystalBalance = previousStates.GetBalance(
-                                ev.Signer,
-                                crystalCurrency);
-                            var outputCrystalBalance = ev.OutputStates.GetBalance(
-                                ev.Signer,
-                                crystalCurrency);
-                            var burntCrystal = prevCrystalBalance - outputCrystalBalance;
-                            _hasRandomBuffList.Add(new HasRandomBuffModel()
-                            {
-                                Id = hasRandomBuff.Id.ToString(),
-                                BlockIndex = ev.BlockIndex,
-                                AgentAddress = ev.Signer.ToString(),
-                                AvatarAddress = hasRandomBuff.AvatarAddress.ToString(),
-                                HasStageId = currentStageId,
-                                GachaCount = !hasRandomBuff.AdvancedGacha ? 5 : 10,
-                                BurntCrystal = Convert.ToDecimal(burntCrystal.GetQuantityString()),
-                                TimeStamp = _blockTimeOffset,
-                            });
-
+                            _hasRandomBuffList.Add(HackAndSlashRandomBuffData.GetHasRandomBuffInfo(ev, hasRandomBuff, _blockTimeOffset));
                             var end = DateTimeOffset.UtcNow;
                             Log.Debug("Stored HasRandomBuff action in block #{index}. Time Taken: {time} ms.", ev.BlockIndex, (end - start).Milliseconds);
                         }
@@ -711,29 +655,7 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } joinArena)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            AvatarState avatarState = ev.OutputStates.GetAvatarStateV2(joinArena.avatarAddress);
-                            var previousStates = ev.PreviousStates;
-                            Currency crystalCurrency = CrystalCalculator.CRYSTAL;
-                            var prevCrystalBalance = previousStates.GetBalance(
-                                ev.Signer,
-                                crystalCurrency);
-                            var outputCrystalBalance = ev.OutputStates.GetBalance(
-                                ev.Signer,
-                                crystalCurrency);
-                            var burntCrystal = prevCrystalBalance - outputCrystalBalance;
-                            _joinArenaList.Add(new JoinArenaModel()
-                            {
-                                Id = joinArena.Id.ToString(),
-                                BlockIndex = ev.BlockIndex,
-                                AgentAddress = ev.Signer.ToString(),
-                                AvatarAddress = joinArena.avatarAddress.ToString(),
-                                AvatarLevel = avatarState.level,
-                                ArenaRound = joinArena.round,
-                                ChampionshipId = joinArena.championshipId,
-                                BurntCrystal = Convert.ToDecimal(burntCrystal.GetQuantityString()),
-                                TimeStamp = _blockTimeOffset,
-                            });
-
+                            _joinArenaList.Add(JoinArenaData.GetJoinArenaInfo(ev, joinArena, _blockTimeOffset));
                             var end = DateTimeOffset.UtcNow;
                             Log.Debug("Stored JoinArena action in block #{index}. Time Taken: {time} ms.", ev.BlockIndex, (end - start).Milliseconds);
                         }
@@ -752,166 +674,8 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } battleArena)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            AvatarState avatarState = ev.OutputStates.GetAvatarStateV2(battleArena.myAvatarAddress);
-                            var previousStates = ev.PreviousStates;
-                            var myArenaScoreAdr =
-                                ArenaScore.DeriveAddress(battleArena.myAvatarAddress, battleArena.championshipId, battleArena.round);
-                            previousStates.TryGetArenaScore(myArenaScoreAdr, out var previousArenaScore);
-                            ev.OutputStates.TryGetArenaScore(myArenaScoreAdr, out var currentArenaScore);
-                            Currency ncgCurrency = ev.OutputStates.GetGoldCurrency();
-                            var prevNCGBalance = previousStates.GetBalance(
-                                ev.Signer,
-                                ncgCurrency);
-                            var outputNCGBalance = ev.OutputStates.GetBalance(
-                                ev.Signer,
-                                ncgCurrency);
-                            var burntNCG = prevNCGBalance - outputNCGBalance;
-                            int ticketCount = battleArena.ticket;
-                            var sheets = previousStates.GetSheets(
-                                sheetTypes: new[]
-                                {
-                                    typeof(ArenaSheet),
-                                    typeof(ItemRequirementSheet),
-                                    typeof(EquipmentItemRecipeSheet),
-                                    typeof(EquipmentItemSubRecipeSheetV2),
-                                    typeof(EquipmentItemOptionSheet),
-                                    typeof(MaterialItemSheet),
-                                    typeof(CharacterSheet),
-                                    typeof(CostumeStatSheet),
-                                    typeof(RuneListSheet),
-                                    typeof(RuneOptionSheet),
-                                });
-                            var arenaSheet = ev.OutputStates.GetSheet<ArenaSheet>();
-                            var arenaData = arenaSheet.GetRoundByBlockIndex(ev.BlockIndex);
-                            var arenaInformationAdr =
-                                ArenaInformation.DeriveAddress(battleArena.myAvatarAddress, battleArena.championshipId, battleArena.round);
-                            previousStates.TryGetArenaInformation(arenaInformationAdr, out var previousArenaInformation);
-                            ev.OutputStates.TryGetArenaInformation(arenaInformationAdr, out var currentArenaInformation);
-                            var winCount = currentArenaInformation.Win - previousArenaInformation.Win;
-                            var medalCount = 0;
-                            if (arenaData.ArenaType != ArenaType.OffSeason &&
-                                winCount > 0)
-                            {
-                                var materialSheet = sheets.GetSheet<MaterialItemSheet>();
-                                var medal = ArenaHelper.GetMedal(battleArena.championshipId, battleArena.round, materialSheet);
-                                if (medal != null)
-                                {
-                                    medalCount += winCount;
-                                }
-                            }
-
-                            var itemSlotStateAddress = ItemSlotState.DeriveAddress(battleArena.myAvatarAddress, BattleType.Arena);
-                            var itemSlotState = ev.OutputStates.TryGetState(itemSlotStateAddress, out List rawItemSlotState)
-                                ? new ItemSlotState(rawItemSlotState)
-                                : new ItemSlotState(BattleType.Adventure);
-                            var equipmentInventory = avatarState.inventory.Equipments;
-                            var equipmentList = itemSlotState.Equipments
-                                .Select(guid => equipmentInventory.FirstOrDefault(x => x.ItemId == guid))
-                                .Where(item => item != null).ToList();
-
-                            var costumeInventory = avatarState.inventory.Costumes;
-                            var costumeList = itemSlotState.Costumes
-                                .Select(guid => costumeInventory.FirstOrDefault(x => x.ItemId == guid))
-                                .Where(item => item != null).ToList();
-                            var runeOptionSheet = sheets.GetSheet<RuneOptionSheet>();
-                            var runeOptions = new List<RuneOptionSheet.Row.RuneOptionInfo>();
-                            var runeStates = new List<RuneState>();
-                            foreach (var address in battleArena.runeInfos.Select(info => RuneState.DeriveAddress(battleArena.myAvatarAddress, info.RuneId)))
-                            {
-                                if (ev.OutputStates.TryGetState(address, out List rawRuneState))
-                                {
-                                    runeStates.Add(new RuneState(rawRuneState));
-                                }
-                            }
-
-                            foreach (var runeState in runeStates)
-                            {
-                                if (!runeOptionSheet.TryGetValue(runeState.RuneId, out var optionRow))
-                                {
-                                    throw new SheetRowNotFoundException("RuneOptionSheet", runeState.RuneId);
-                                }
-
-                                if (!optionRow.LevelOptionMap.TryGetValue(runeState.Level, out var option))
-                                {
-                                    throw new SheetRowNotFoundException("RuneOptionSheet", runeState.Level);
-                                }
-
-                                runeOptions.Add(option);
-                            }
-
-                            var characterSheet = sheets.GetSheet<CharacterSheet>();
-                            if (!characterSheet.TryGetValue(avatarState.characterId, out var characterRow))
-                            {
-                                throw new SheetRowNotFoundException("CharacterSheet", avatarState.characterId);
-                            }
-
-                            var costumeStatSheet = sheets.GetSheet<CostumeStatSheet>();
-                            var avatarLevel = avatarState.level;
-                            var avatarArmorId = avatarState.GetArmorId();
-                            Costume? avatarTitleCostume;
-                            try
-                            {
-                                avatarTitleCostume =
-                                    avatarState.inventory.Costumes.FirstOrDefault(costume =>
-                                        costume.ItemSubType == ItemSubType.Title &&
-                                        costume.equipped);
-                            }
-                            catch (Exception)
-                            {
-                                avatarTitleCostume = null;
-                            }
-
-                            int? avatarTitleId = null;
-                            if (avatarTitleCostume != null)
-                            {
-                                avatarTitleId = avatarTitleCostume.Id;
-                            }
-
-                            var avatarCp = CPHelper.TotalCP(
-                               equipmentList,
-                               costumeList,
-                               runeOptions,
-                               avatarState.level,
-                               characterRow,
-                               costumeStatSheet);
-                            string avatarName = avatarState.name;
-
-                            Log.Debug(
-                                "AvatarName: {0}, AvatarLevel: {1}, ArmorId: {2}, TitleId: {3}, CP: {4}",
-                                avatarName,
-                                avatarLevel,
-                                avatarArmorId,
-                                avatarTitleId,
-                                avatarCp);
-
-                            _avatarList.Add(new AvatarModel()
-                            {
-                                Address = battleArena.myAvatarAddress.ToString(),
-                                AgentAddress = ev.Signer.ToString(),
-                                Name = avatarName,
-                                AvatarLevel = avatarLevel,
-                                TitleId = avatarTitleId,
-                                ArmorId = avatarArmorId,
-                                Cp = avatarCp,
-                                Timestamp = _blockTimeOffset,
-                            });
-                            _battleArenaList.Add(new BattleArenaModel()
-                            {
-                                Id = battleArena.Id.ToString(),
-                                BlockIndex = ev.BlockIndex,
-                                AgentAddress = ev.Signer.ToString(),
-                                AvatarAddress = battleArena.myAvatarAddress.ToString(),
-                                AvatarLevel = avatarState.level,
-                                EnemyAvatarAddress = battleArena.enemyAvatarAddress.ToString(),
-                                ChampionshipId = battleArena.championshipId,
-                                Round = battleArena.round,
-                                TicketCount = ticketCount,
-                                BurntNCG = Convert.ToDecimal(burntNCG.GetQuantityString()),
-                                Victory = currentArenaScore.Score > previousArenaScore.Score,
-                                MedalCount = medalCount,
-                                TimeStamp = _blockTimeOffset,
-                            });
-
+                            _avatarList.Add(AvatarData.GetAvatarInfo(ev.OutputStates, ev.Signer, battleArena.myAvatarAddress, battleArena.runeInfos, _blockTimeOffset));
+                            _battleArenaList.Add(BattleArenaData.GetBattleArenaInfo(ev, battleArena, _blockTimeOffset));
                             var end = DateTimeOffset.UtcNow;
                             Log.Debug("Stored BattleArena action in block #{index}. Time Taken: {time} ms.", ev.BlockIndex, (end - start).Milliseconds);
                         }
@@ -930,27 +694,7 @@ namespace NineChronicles.DataProvider
                         if (ev.Exception == null && ev.Action is { } battleGrandFinale)
                         {
                             var start = DateTimeOffset.UtcNow;
-                            AvatarState avatarState = ev.OutputStates.GetAvatarStateV2(battleGrandFinale.myAvatarAddress);
-                            var previousStates = ev.PreviousStates;
-                            var scoreAddress = battleGrandFinale.myAvatarAddress.Derive(string.Format(CultureInfo.InvariantCulture, BattleGrandFinale.ScoreDeriveKey, battleGrandFinale.grandFinaleId));
-                            previousStates.TryGetState(scoreAddress, out Integer previousGrandFinaleScore);
-                            ev.OutputStates.TryGetState(scoreAddress, out Integer outputGrandFinaleScore);
-
-                            _battleGrandFinaleList.Add(new BattleGrandFinaleModel()
-                            {
-                                Id = battleGrandFinale.Id.ToString(),
-                                BlockIndex = ev.BlockIndex,
-                                AgentAddress = ev.Signer.ToString(),
-                                AvatarAddress = battleGrandFinale.myAvatarAddress.ToString(),
-                                AvatarLevel = avatarState.level,
-                                EnemyAvatarAddress = battleGrandFinale.enemyAvatarAddress.ToString(),
-                                GrandFinaleId = battleGrandFinale.grandFinaleId,
-                                Victory = outputGrandFinaleScore > previousGrandFinaleScore,
-                                GrandFinaleScore = outputGrandFinaleScore,
-                                Date = _blockTimeOffset,
-                                TimeStamp = _blockTimeOffset,
-                            });
-
+                            _battleGrandFinaleList.Add(BattleGrandFinaleData.GetBattleGrandFinaleInfo(ev, battleGrandFinale, _blockTimeOffset));
                             var end = DateTimeOffset.UtcNow;
                             Log.Debug("Stored BattleGrandFinale action in block #{index}. Time Taken: {time} ms.", ev.BlockIndex, (end - start).Milliseconds);
                         }
@@ -1586,17 +1330,7 @@ namespace NineChronicles.DataProvider
                                 }
                             }
 
-                            _avatarList.Add(new AvatarModel()
-                            {
-                                Address = ev.Action.AvatarAddress.ToString(),
-                                AgentAddress = ev.Signer.ToString(),
-                                Name = avatarName,
-                                AvatarLevel = avatarLevel,
-                                TitleId = avatarTitleId,
-                                ArmorId = avatarArmorId,
-                                Cp = avatarCp,
-                                Timestamp = _blockTimeOffset,
-                            });
+                            _avatarList.Add(AvatarData.GetAvatarInfo(ev.OutputStates, ev.Signer, ev.Action.AvatarAddress, ev.Action.RuneInfos, _blockTimeOffset));
 
                             int raidId = 0;
                             bool found = false;
