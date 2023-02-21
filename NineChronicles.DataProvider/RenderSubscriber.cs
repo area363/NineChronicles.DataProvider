@@ -1141,7 +1141,7 @@ namespace NineChronicles.DataProvider
             if (!_agents.Contains(ev.Signer.ToString()))
             {
                 _agents.Add(ev.Signer.ToString());
-                _agentList.Add(AgentData.GetAgentInfo(ev));
+                _agentList.Add(AgentData.GetAgentInfo(ev.Signer));
 
                 if (ev.Signer != _miner)
                 {

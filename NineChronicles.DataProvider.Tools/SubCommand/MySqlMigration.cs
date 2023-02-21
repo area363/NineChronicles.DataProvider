@@ -49,11 +49,7 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
         private List<string> _agentFiles;
         private List<string> _avatarFiles;
         private List<string> _hasFiles;
-        private IDbContextFactory<NineChroniclesContext> _dbContextFactory;
         private MySqlStore mySqlStore;
-        protected const string ConnectionStringFormat = "server=localhost;database={0};uid=root;port=3306;";
-        protected NineChroniclesContext Context;
-        protected ServiceCollection Services;
 
         [Command(Description = "Migrate action data in rocksdb store to mysql db.")]
         public void Migration(
@@ -107,28 +103,16 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
             _connectionString = builder.ConnectionString;
 
             var connectionString = _connectionString;
-
-            var services = new ServiceCollection();
-            services.AddDbContextFactory<NineChroniclesContext>(options =>
-            {
-                options.UseMySql(
-                    connectionString,
-                    ServerVersion.AutoDetect(
-                        connectionString),
-                    b => b.MigrationsAssembly("NineChronicles.DataProvider.Executable"));
-            });
-            services.AddSingleton<MySqlStore>();
             var dbContextOptions =
                 new DbContextOptionsBuilder<NineChroniclesContext>()
                     .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)).Options;
-            Context = new NineChroniclesContext(dbContextOptions);
             var serviceCollection = new ServiceCollection();
             IServiceProvider provider = serviceCollection.BuildServiceProvider();
-            _dbContextFactory = new DbContextFactory<NineChroniclesContext>(
+            IDbContextFactory<NineChroniclesContext> dbContextFactory = new DbContextFactory<NineChroniclesContext>(
                 provider,
                 dbContextOptions,
                 new DbContextFactorySource<NineChroniclesContext>());
-            mySqlStore = new MySqlStore(_dbContextFactory);
+            mySqlStore = new MySqlStore(dbContextFactory);
 
             Console.WriteLine("Setting up RocksDBStore...");
             if (rocksdbStoreType == "new")
@@ -213,6 +197,7 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                     int limitInterval;
                     var blockList = new List<BlockModel>();
                     var txList = new List<TransactionModel>();
+                    var agentList = new List<AgentModel>();
                     Task<List<ActionEvaluation>>[] taskArray;
                     if (interval < remainingCount)
                     {
@@ -233,10 +218,12 @@ namespace NineChronicles.DataProvider.Tools.SubCommand
                         foreach (var tx in block.Transactions)
                         {
                             txList.Add(TransactionData.GetTransactionInfo(block, tx));
+                            agentList.Add(AgentData.GetAgentInfo(tx.Signer));
                         }
 
                         mySqlStore.StoreBlockList(blockList);
                         mySqlStore.StoreTransactionList(txList);
+                        mySqlStore.StoreAgentList(agentList);
                         taskArray[item.i] = Task.Factory.StartNew(() =>
                         {
                             List<ActionEvaluation> actionEvaluations = EvaluateBlock(block);
