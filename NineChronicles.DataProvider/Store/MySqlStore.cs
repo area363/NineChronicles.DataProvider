@@ -50,46 +50,10 @@ namespace NineChronicles.DataProvider.Store
                     ctx.SaveChanges();
                     ctx.Dispose();
                 }
-                else
-                {
-                    ctx.Dispose();
-                    using NineChroniclesContext updateCtx = _dbContextFactory.CreateDbContext();
-                    if (avatarLevel == null && titleId == null && armorId == null && cp == null)
-                    {
-                        updateCtx.Avatars!.UpdateRange(
-                            new AvatarModel()
-                            {
-                                Address = address.ToString(),
-                                AgentAddress = agentAddress.ToString(),
-                                Name = name,
-                                Timestamp = timestamp,
-                            }
-                        );
-                    }
-                    else
-                    {
-                        updateCtx.Avatars!.UpdateRange(
-                            new AvatarModel()
-                            {
-                                Address = address.ToString(),
-                                AgentAddress = agentAddress.ToString(),
-                                Name = name,
-                                AvatarLevel = avatarLevel,
-                                TitleId = titleId,
-                                ArmorId = armorId,
-                                Cp = cp,
-                                Timestamp = timestamp,
-                            }
-                        );
-                    }
-
-                    updateCtx.SaveChanges();
-                    updateCtx.Dispose();
-                }
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -109,14 +73,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.Avatars!.UpdateRange(avatar);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -124,7 +80,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -148,7 +104,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -168,14 +124,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.Agents!.UpdateRange(agent);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -183,7 +131,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -216,7 +164,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -236,14 +184,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.HackAndSlashes!.UpdateRange(has);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -251,7 +191,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -271,14 +211,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.HackAndSlashSweeps!.UpdateRange(hasSweep);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -286,7 +218,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -306,14 +238,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.EventDungeonBattles!.UpdateRange(eventDungeonBattle);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -321,7 +245,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -341,14 +265,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.EventConsumableItemCrafts!.UpdateRange(eventConsumableItemCraft);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -356,7 +272,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -625,16 +541,8 @@ namespace NineChronicles.DataProvider.Store
                             }
                             catch (Exception e)
                             {
-                                Log.Debug(e.Message);
+                                Console.WriteLine(e.InnerException!.Message);
                             }
-                        }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.CombinationConsumables!.UpdateRange(cc);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
                         }
                     }));
                 }
@@ -643,7 +551,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -729,16 +637,8 @@ namespace NineChronicles.DataProvider.Store
                             }
                             catch (Exception e)
                             {
-                                Log.Debug(e.Message);
+                                Console.WriteLine(e.InnerException!.Message);
                             }
-                        }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.CombinationEquipments!.UpdateRange(ce);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
                         }
                     }));
                 }
@@ -747,7 +647,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -767,14 +667,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.ShopHistoryEquipments!.UpdateRange(se);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -782,7 +674,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -802,14 +694,6 @@ namespace NineChronicles.DataProvider.Store
                             ctx.SaveChanges();
                             ctx.Dispose();
                         }
-                        else
-                        {
-                            ctx.Dispose();
-                            using NineChroniclesContext updateCtx = _dbContextFactory.CreateDbContext();
-                            updateCtx.ShopHistoryCostumes!.UpdateRange(sct);
-                            updateCtx.SaveChanges();
-                            updateCtx.Dispose();
-                        }
                     }));
                 }
 
@@ -817,7 +701,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -837,14 +721,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.ShopHistoryMaterials!.UpdateRange(sm);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -852,7 +728,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -872,14 +748,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.ShopHistoryConsumables!.UpdateRange(sc);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -887,7 +755,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -907,14 +775,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.ShopHistoryFungibleAssetValues!.UpdateRange(sf);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -922,7 +782,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1009,16 +869,8 @@ namespace NineChronicles.DataProvider.Store
                             }
                             catch (Exception e)
                             {
-                                Log.Debug(e.Message);
+                                Console.WriteLine(e.InnerException!.Message);
                             }
-                        }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.ItemEnhancements!.UpdateRange(ie);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
                         }
                     }));
                 }
@@ -1027,7 +879,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1068,7 +920,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1088,14 +940,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.ClaimStakeRewards!.UpdateRange(claimStake);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1103,7 +947,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1128,7 +972,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1148,14 +992,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.Grindings!.UpdateRange(grind);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1163,7 +999,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1183,14 +1019,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.ItemEnhancementFails!.UpdateRange(itemEnhancementFail);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1198,7 +1026,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1218,14 +1046,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.UnlockEquipmentRecipes!.UpdateRange(unlockEquipmentRecipe);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1233,7 +1053,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1253,14 +1073,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.UnlockWorlds!.UpdateRange(unlockWorld);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1268,7 +1080,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1289,14 +1101,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.ReplaceCombinationEquipmentMaterials!.UpdateRange(replaceCombinationEquipmentMaterial);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1304,7 +1108,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1324,14 +1128,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.HasRandomBuffs!.UpdateRange(hasRandomBuff);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1339,7 +1135,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1359,14 +1155,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.HasWithRandomBuffs!.UpdateRange(hasWithRandomBuff);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1374,7 +1162,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1394,14 +1182,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.JoinArenas!.UpdateRange(joinArena);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1409,7 +1189,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1429,14 +1209,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.BattleArenas!.UpdateRange(battleArena);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1444,7 +1216,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1465,14 +1237,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.Raiders.UpdateRange(raider);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1480,7 +1244,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1500,14 +1264,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.BattleGrandFinales.UpdateRange(battleGrandFinale);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1515,7 +1271,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1535,14 +1291,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.EventMaterialItemCrafts.UpdateRange(eventMaterialItemCrafts);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1550,7 +1298,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1570,14 +1318,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.RuneEnhancements.UpdateRange(runeEnhancement);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1585,7 +1325,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1605,14 +1345,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.RunesAcquired.UpdateRange(runesAcquired);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1620,7 +1352,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1640,14 +1372,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.UnlockRuneSlots.UpdateRange(unlockRuneSlot);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1655,7 +1379,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1675,14 +1399,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.RapidCombinations.UpdateRange(rapidCombination);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1690,7 +1406,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1717,14 +1433,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.Blocks.UpdateRange(block);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1732,7 +1440,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1752,14 +1460,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.Transactions!.UpdateRange(transaction);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1767,7 +1467,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1787,15 +1487,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext
-                                updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.PetEnhancements.UpdateRange(petEnhancement);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1803,7 +1494,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
@@ -1928,14 +1619,6 @@ namespace NineChronicles.DataProvider.Store
                             await ctx.SaveChangesAsync();
                             await ctx.DisposeAsync();
                         }
-                        else
-                        {
-                            await ctx.DisposeAsync();
-                            await using NineChroniclesContext updateCtx = await _dbContextFactory.CreateDbContextAsync();
-                            updateCtx.Equipments!.UpdateRange(eq);
-                            await updateCtx.SaveChangesAsync();
-                            await updateCtx.DisposeAsync();
-                        }
                     }));
                 }
 
@@ -1943,7 +1626,7 @@ namespace NineChronicles.DataProvider.Store
             }
             catch (Exception e)
             {
-                Log.Debug(e.Message);
+                Console.WriteLine(e.InnerException!.Message);
             }
         }
 
