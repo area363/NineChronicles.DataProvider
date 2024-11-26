@@ -1,3 +1,5 @@
+using System.Threading;
+
 namespace NineChronicles.DataProvider.Executable.Commands
 {
     using System;
@@ -57,8 +59,8 @@ namespace NineChronicles.DataProvider.Executable.Commands
                 Port = mysqlPort,
                 AllowLoadLocalInfile = true,
                 AllowUserVariables = true,
-                ConnectionTimeout = 3600,
-                DefaultCommandTimeout = 3600,
+                ConnectionTimeout = 36000,
+                DefaultCommandTimeout = 36000,
             };
 
             _connectionString = builder.ConnectionString;
@@ -80,7 +82,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"SELECT COUNT(DISTINCT Signer) as 'Unique Address' FROM Transactions WHERE Date = '{date}'";
                 connection.Open();
                 var dauCommand = new MySqlCommand(dauQuery, connection);
-                dauCommand.CommandTimeout = 3600;
+                dauCommand.CommandTimeout = 36000;
                 var dauReader = dauCommand.ExecuteReader();
                 while (dauReader.Read())
                 {
@@ -102,7 +104,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"SELECT COUNT(TxId) as 'Transactions' FROM Transactions WHERE Date = '{date}'";
                 connection.Open();
                 var txCountCommand = new MySqlCommand(txCountQuery, connection);
-                txCountCommand.CommandTimeout = 3600;
+                txCountCommand.CommandTimeout = 36000;
                 var txCountReader = txCountCommand.ExecuteReader();
                 while (txCountReader.Read())
                 {
@@ -124,7 +126,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select count(Signer) from Transactions WHERE ActionType = 'ApprovePledge' AND Date = '{date}'";
                 connection.Open();
                 var newDauCommand = new MySqlCommand(newDauQuery, connection);
-                newDauCommand.CommandTimeout = 3600;
+                newDauCommand.CommandTimeout = 36000;
                 var newDauReader = newDauCommand.ExecuteReader();
                 while (newDauReader.Read())
                 {
@@ -145,7 +147,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                 var hasCountQuery = $"select count(Id) as 'Count' from HackAndSlashes where Date = '{date}'";
                 connection.Open();
                 var hasCountCommand = new MySqlCommand(hasCountQuery, connection);
-                hasCountCommand.CommandTimeout = 3600;
+                hasCountCommand.CommandTimeout = 36000;
                 var hasCountReader = hasCountCommand.ExecuteReader();
                 while (hasCountReader.Read())
                 {
@@ -167,7 +169,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select COUNT(DISTINCT AgentAddress) as 'Player Count' from HackAndSlashes where Date = '{date}'";
                 connection.Open();
                 var hasUsersCommand = new MySqlCommand(hasUsersQuery, connection);
-                hasUsersCommand.CommandTimeout = 3600;
+                hasUsersCommand.CommandTimeout = 36000;
                 var hasUsersReader = hasUsersCommand.ExecuteReader();
                 while (hasUsersReader.Read())
                 {
@@ -188,7 +190,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                 var sweepCountQuery = $"select count(Id) as 'Count' from HackAndSlashSweeps where Date = '{date}'";
                 connection.Open();
                 var sweepCountCommand = new MySqlCommand(sweepCountQuery, connection);
-                sweepCountCommand.CommandTimeout = 3600;
+                sweepCountCommand.CommandTimeout = 36000;
                 var sweepCountReader = sweepCountCommand.ExecuteReader();
                 while (sweepCountReader.Read())
                 {
@@ -210,7 +212,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select COUNT(DISTINCT AgentAddress) as 'Player Count' from HackAndSlashSweeps where Date =  '{date}'";
                 connection.Open();
                 var sweepUsersCommand = new MySqlCommand(sweepUsersQuery, connection);
-                sweepUsersCommand.CommandTimeout = 3600;
+                sweepUsersCommand.CommandTimeout = 36000;
                 var sweepUsersReader = sweepUsersCommand.ExecuteReader();
                 while (sweepUsersReader.Read())
                 {
@@ -232,7 +234,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select count(Id) as 'Count' from CombinationEquipments where Date = '{date}'";
                 connection.Open();
                 var combinationEquipmentCountCommand = new MySqlCommand(combinationEquipmentCountQuery, connection);
-                combinationEquipmentCountCommand.CommandTimeout = 3600;
+                combinationEquipmentCountCommand.CommandTimeout = 36000;
                 var combinationEquipmentCountReader = combinationEquipmentCountCommand.ExecuteReader();
                 while (combinationEquipmentCountReader.Read())
                 {
@@ -255,7 +257,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select COUNT(DISTINCT AgentAddress) as 'Player Count' from CombinationConsumables where Date = '{date}'";
                 connection.Open();
                 var combinationEquipmentUsersCommand = new MySqlCommand(combinationEquipmentUsersQuery, connection);
-                combinationEquipmentUsersCommand.CommandTimeout = 3600;
+                combinationEquipmentUsersCommand.CommandTimeout = 36000;
                 var combinationEquipmentUsersReader = combinationEquipmentUsersCommand.ExecuteReader();
                 while (combinationEquipmentUsersReader.Read())
                 {
@@ -278,7 +280,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select count(Id) as 'Count' from CombinationConsumables where Date = '{date}'";
                 connection.Open();
                 var combinationConsumableCountCommand = new MySqlCommand(combinationConsumableCountQuery, connection);
-                combinationConsumableCountCommand.CommandTimeout = 3600;
+                combinationConsumableCountCommand.CommandTimeout = 36000;
                 var combinationConsumableCountReader = combinationConsumableCountCommand.ExecuteReader();
                 while (combinationConsumableCountReader.Read())
                 {
@@ -301,7 +303,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select COUNT(DISTINCT AgentAddress) as 'Player Count' from CombinationEquipments where Date = '{date}'";
                 connection.Open();
                 var combinationConsumableUsersCommand = new MySqlCommand(combinationConsumableUsersQuery, connection);
-                combinationConsumableUsersCommand.CommandTimeout = 3600;
+                combinationConsumableUsersCommand.CommandTimeout = 36000;
                 var combinationConsumableUsersReader = combinationConsumableUsersCommand.ExecuteReader();
                 while (combinationConsumableUsersReader.Read())
                 {
@@ -324,7 +326,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select count(Id) as 'Count' from ItemEnhancements where Date = '{date}'";
                 connection.Open();
                 var itemEnhancementCountCommand = new MySqlCommand(itemEnhancementCountQuery, connection);
-                itemEnhancementCountCommand.CommandTimeout = 3600;
+                itemEnhancementCountCommand.CommandTimeout = 36000;
                 var itemEnhancementCountReader = itemEnhancementCountCommand.ExecuteReader();
                 while (itemEnhancementCountReader.Read())
                 {
@@ -346,7 +348,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select COUNT(DISTINCT AgentAddress) as 'Player Count' from ItemEnhancements where Date = '{date}'";
                 connection.Open();
                 var itemEnhancementUsersCommand = new MySqlCommand(itemEnhancementUsersQuery, connection);
-                itemEnhancementUsersCommand.CommandTimeout = 3600;
+                itemEnhancementUsersCommand.CommandTimeout = 36000;
                 var itemEnhancementUsersReader = itemEnhancementUsersCommand.ExecuteReader();
                 while (itemEnhancementUsersReader.Read())
                 {
@@ -368,7 +370,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"select SUM(SummonCount) from AuraSummons where GroupId = '10002' AND Date = '{date}'";
                 connection.Open();
                 var auraSummonCommand = new MySqlCommand(auraSummonQuery, connection);
-                auraSummonCommand.CommandTimeout = 3600;
+                auraSummonCommand.CommandTimeout = 36000;
                 var auraSummonReader = auraSummonCommand.ExecuteReader();
                 while (auraSummonReader.Read())
                 {
@@ -389,7 +391,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                 var runeSummonQuery = $"select SUM(SummonCount) from RuneSummons where Date = '{date}'";
                 connection.Open();
                 var runeSummonCommand = new MySqlCommand(runeSummonQuery, connection);
-                runeSummonCommand.CommandTimeout = 3600;
+                runeSummonCommand.CommandTimeout = 36000;
                 var runeSummonReader = runeSummonCommand.ExecuteReader();
                 while (runeSummonReader.Read())
                 {
@@ -410,7 +412,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                 var apUsageQuery = $"select SUM(ApStoneCount) from HackAndSlashSweeps where Date = '{date}'";
                 connection.Open();
                 var apUsageCommand = new MySqlCommand(apUsageQuery, connection);
-                apUsageCommand.CommandTimeout = 3600;
+                apUsageCommand.CommandTimeout = 36000;
                 var apUsageReader = apUsageCommand.ExecuteReader();
                 while (apUsageReader.Read())
                 {
@@ -431,7 +433,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                 var hourglassUsageQuery = $"SELECT SUM(HourglassCount) FROM RapidCombinations WHERE Date = '{date}'";
                 connection.Open();
                 var hourglassUsageCommand = new MySqlCommand(hourglassUsageQuery, connection);
-                hourglassUsageCommand.CommandTimeout = 3600;
+                hourglassUsageCommand.CommandTimeout = 36000;
                 var hourglassUsageReader = hourglassUsageCommand.ExecuteReader();
                 while (hourglassUsageReader.Read())
                 {
@@ -458,7 +460,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     ) a";
                 connection.Open();
                 var ncgTradeCommand = new MySqlCommand(ncgTradeQuery, connection);
-                ncgTradeCommand.CommandTimeout = 3600;
+                ncgTradeCommand.CommandTimeout = 36000;
                 var ncgTradeReader = ncgTradeCommand.ExecuteReader();
                 while (ncgTradeReader.Read())
                 {
@@ -480,7 +482,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"SELECT sum(BurntNCG) as 'Enhance NCG(Amount)' from ItemEnhancements  where Date = '{date}'";
                 connection.Open();
                 var enhanceNcgCommand = new MySqlCommand(enhanceNcgQuery, connection);
-                enhanceNcgCommand.CommandTimeout = 3600;
+                enhanceNcgCommand.CommandTimeout = 36000;
                 var enhanceNcgReader = enhanceNcgCommand.ExecuteReader();
                 while (enhanceNcgReader.Read())
                 {
@@ -502,7 +504,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"SELECT sum(BurntNCG) as 'Rune NCG(Amount)' from RuneEnhancements   where Date = '{date}'";
                 connection.Open();
                 var runeNcgCommand = new MySqlCommand(runeNcgQuery, connection);
-                runeNcgCommand.CommandTimeout = 3600;
+                runeNcgCommand.CommandTimeout = 36000;
                 var runeNcgReader = runeNcgCommand.ExecuteReader();
                 while (runeNcgReader.Read())
                 {
@@ -524,7 +526,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"SELECT sum(BurntNCG) as 'RuneSlot NCG(Amount)' from UnlockRuneSlots  where Date = '{date}'";
                 connection.Open();
                 var runeSlotNcgCommand = new MySqlCommand(runeSlotNcgQuery, connection);
-                runeSlotNcgCommand.CommandTimeout = 3600;
+                runeSlotNcgCommand.CommandTimeout = 36000;
                 var runeSlotNcgReader = runeSlotNcgCommand.ExecuteReader();
                 while (runeSlotNcgReader.Read())
                 {
@@ -546,7 +548,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"SELECT sum(BurntNCG) as 'Arena NCG(Amount)' from BattleArenas where Date = '{date}'";
                 connection.Open();
                 var arenaNcgCommand = new MySqlCommand(arenaNcgQuery, connection);
-                arenaNcgCommand.CommandTimeout = 3600;
+                arenaNcgCommand.CommandTimeout = 36000;
                 var arenaNcgReader = arenaNcgCommand.ExecuteReader();
                 while (arenaNcgReader.Read())
                 {
@@ -568,7 +570,7 @@ namespace NineChronicles.DataProvider.Executable.Commands
                     $"SELECT sum(BurntNCG) as 'EventTicket NCG' from EventDungeonBattles where Date = '{date}'";
                 connection.Open();
                 var eventTicketNcgCommand = new MySqlCommand(eventTicketNcgQuery, connection);
-                eventTicketNcgCommand.CommandTimeout = 3600;
+                eventTicketNcgCommand.CommandTimeout = 36000;
                 var eventTicketNcgReader = eventTicketNcgCommand.ExecuteReader();
                 while (eventTicketNcgReader.Read())
                 {
@@ -632,42 +634,62 @@ namespace NineChronicles.DataProvider.Executable.Commands
             try
             {
                 start = DateTimeOffset.Now;
-                Console.WriteLine("Starting all ranking computations asynchronously...");
+                Console.WriteLine("Starting all ranking computations with limited concurrency...");
 
                 // Define tasks for each ranking computation
-                var abilityRankingTask = Task.Run(async () =>
+                var rankingTasks = new List<Func<Task>>
                 {
-                    Console.WriteLine("Fetching and processing Ability Rankings...");
-                    await ProcessAbilityRankingsAsync();
-                    Console.WriteLine("Ability Rankings processed successfully.");
-                });
+                    async () =>
+                    {
+                        Console.WriteLine("Fetching and processing Ability Rankings...");
+                        await ProcessAbilityRankingsAsync();
+                        Console.WriteLine("Ability Rankings processed successfully.");
+                    },
+                    async () =>
+                    {
+                        Console.WriteLine("Fetching and processing Craft Rankings...");
+                        await ProcessCraftRankingsAsync();
+                        Console.WriteLine("Craft Rankings processed successfully.");
+                    },
+                    async () =>
+                    {
+                        Console.WriteLine("Fetching and processing Stage Rankings...");
+                        await ProcessStageRankingsAsync();
+                        Console.WriteLine("Stage Rankings processed successfully.");
+                    },
+                    async () =>
+                    {
+                        Console.WriteLine("Fetching and processing Equipment Rankings...");
+                        await ProcessAllEquipmentRankingsAsync();
+                        Console.WriteLine("Equipment Rankings processed successfully.");
+                    }
+                };
 
-                var craftRankingTask = Task.Run(async () =>
+                // Limit concurrency to 2 tasks at a time
+                var semaphore = new SemaphoreSlim(2); // Allow 2 tasks at a time
+                var tasks = new List<Task>();
+
+                foreach (var rankingTask in rankingTasks)
                 {
-                    Console.WriteLine("Fetching and processing Craft Rankings...");
-                    await ProcessCraftRankingsAsync();
-                    Console.WriteLine("Craft Rankings processed successfully.");
-                });
+                    await semaphore.WaitAsync(); // Acquire the semaphore
+                    tasks.Add(Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await rankingTask();
+                        }
+                        finally
+                        {
+                            semaphore.Release(); // Release the semaphore
+                        }
+                    }));
+                }
 
-                var stageRankingTask = Task.Run(async () =>
-                {
-                    Console.WriteLine("Fetching and processing Stage Rankings...");
-                    await ProcessStageRankingsAsync();
-                    Console.WriteLine("Stage Rankings processed successfully.");
-                });
+                // Await all tasks
+                await Task.WhenAll(tasks);
 
-                var equipmentRankingTask = Task.Run(async () =>
-                {
-                    Console.WriteLine("Fetching and processing Equipment Rankings...");
-                    await ProcessAllEquipmentRankingsAsync();
-                    Console.WriteLine("Equipment Rankings processed successfully.");
-                });
-
-                // Await all tasks to run in parallel
-                await Task.WhenAll(craftRankingTask, stageRankingTask, equipmentRankingTask, abilityRankingTask);
-
-                var end = DateTimeOffset.Now;
-                Console.WriteLine("All rankings processed successfully. Time Elapsed: {0}", end - start);
+                DateTimeOffset end = DateTimeOffset.Now;
+                Console.WriteLine("All rankings processed successfully with limited concurrency. Time Elapsed: {0}", end - start);
             }
             catch (Exception ex)
             {
